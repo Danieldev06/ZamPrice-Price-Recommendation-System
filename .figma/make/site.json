@@ -1,0 +1,10 @@
+{
+  "description": "ZamPrice empowers Zambian shoppers to compare supermarket prices, optimize their shopping baskets, and save money by recommending the best purchasing options.",
+  "robots": {
+    "index": false
+  },
+  "accessibility": {
+    "addBypassLinks": false,
+    "ignoreReducedMotion": false
+  }
+}

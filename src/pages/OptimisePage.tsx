@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import api from '../api/client';
 
 type Page = 'landing' | 'dashboard' | 'search' | 'compare' | 'basket' | 'optimise' | 'history' | 'alerts' | 'deals' | 'supermarkets' | 'profile' | 'admin' | 'budget' | 'location' | 'substitutions';
 
@@ -7,47 +8,111 @@ interface Props {
 }
 
 const MODES = [
-  { id: 'cheapest', icon: '🥇', label: 'Cheapest', desc: 'Lowest possible total price', color: '#D97706' },
-  { id: 'value', icon: '💰', label: 'Best Value', desc: 'Best price-to-quantity ratio', color: '#0F2547' },
-  { id: 'convenient', icon: '🚗', label: 'Most Convenient', desc: 'Fewer stores to visit', color: '#16A34A' },
+  { id: 'cheapest', icon: '💰', label: 'Cheapest', desc: 'Lowest possible total price', color: '#D97706' },
+  { id: 'value', icon: '⭐', label: 'Best Value', desc: 'Fewest stores possible', color: '#0F2547' },
+  { id: 'convenient', icon: '📍', label: 'Most Convenient', desc: 'Single store trip', color: '#16A34A' },
 ];
 
-const PLAN = {
-  cheapest: {
-    stores: [
-      { name: 'Shoprite', products: 4, items: ['5kg Mealie Meal — K185', '2kg Sugar — K48', '1kg Rice — K32', 'Eggs 18pcs — K35'], total: 300, color: '#E31837', savings: 'Best prices on staples' },
-      { name: 'Choppies', products: 3, items: ['2L Cooking Oil — K70', '5L Cooking Oil — K159', 'Bread 700g — K18'], total: 247, color: '#0066CC', savings: 'Cheapest oil prices' },
-    ],
-    total: 438,
-    original: 501,
-    saving: 63,
-    stores_visited: 2,
-  },
-  value: {
-    stores: [
-      { name: 'Shoprite', products: 5, items: ['5kg Mealie Meal — K185', '2kg Sugar — K48', '1kg Rice — K32', 'Eggs 18pcs — K35', 'Bread 700g — K18'], total: 318, color: '#E31837', savings: 'Largest pack sizes, best unit cost' },
-      { name: 'Choppies', products: 2, items: ['5L Cooking Oil — K159', '2L Cooking Oil — K70'], total: 229, color: '#0066CC', savings: 'Best value cooking oil' },
-    ],
-    total: 447,
-    original: 501,
-    saving: 54,
-    stores_visited: 2,
-  },
-  convenient: {
-    stores: [
-      { name: 'Shoprite', products: 7, items: ['5kg Mealie Meal — K185', '2L Cooking Oil — K75', '2kg Sugar — K48', '1kg Rice — K32', 'Bread — K18', 'Eggs — K35', '5L Oil — K165'], total: 558, color: '#E31837', savings: 'Everything in one trip' },
-    ],
-    total: 558,
-    original: 501,
-    saving: -57,
-    stores_visited: 1,
-  },
-};
+interface BackendStore {
+  name: string;
+  products: number;
+  items: string[];
+  total: number;
+  color: string;
+  savings: string;
+}
+
+interface BackendPlan {
+  total: number;
+  original: number;
+  saving: number;
+  stores_visited: number;
+  stores: BackendStore[];
+}
 
 export default function OptimisePage({ onNavigate }: Props) {
   const [mode, setMode] = useState<'cheapest' | 'value' | 'convenient'>('cheapest');
   const [applied, setApplied] = useState(false);
-  const plan = PLAN[mode];
+  const [loading, setLoading] = useState(true);
+  const [plans, setPlans] = useState<Record<string, BackendPlan> | null>(null);
+  const [error, setError] = useState("");
+
+  const STORE_COLORS: Record<string, string> = { 'Shoprite': '#E31837', 'Choppies': '#0066CC', 'Pick n Pay': '#008000' };
+
+  useEffect(() => {
+    async function fetchOptimisation() {
+      const saved = localStorage.getItem('zamprice_basket');
+      const items = saved ? JSON.parse(saved) : [{ product_id: 1, quantity: 1 }, { product_id: 5, quantity: 2 }];
+
+      try {
+        // We request the cheapest plan but with a weight to also calculate convenience
+        const res = await api.post('/basket/optimize', {
+          items,
+          mode: 'cheapest',
+          convenience_weight: 10,
+          convenience_cost_per_store: 50
+        });
+
+        const data = res.data;
+        const processedPlans: Record<string, BackendPlan> = {};
+
+        const mapPlan = (backendPlan: any, originalTotal: number): BackendPlan => {
+          const storesMap: Record<string, BackendStore> = {};
+          
+          backendPlan.lines.forEach((line: any) => {
+            if (!storesMap[line.supermarket]) {
+              storesMap[line.supermarket] = {
+                name: line.supermarket,
+                products: 0,
+                items: [],
+                total: 0,
+                color: STORE_COLORS[line.supermarket] || '#333',
+                savings: 'Cheapest prices'
+              };
+            }
+            storesMap[line.supermarket].products += 1;
+            storesMap[line.supermarket].total += line.line_total;
+            storesMap[line.supermarket].items.push(`${line.quantity} × ${line.product_name} — K${line.line_total.toFixed(2)}`);
+          });
+
+          const saving = originalTotal - backendPlan.total;
+          return {
+            total: backendPlan.total,
+            original: originalTotal,
+            saving: saving,
+            stores_visited: backendPlan.store_count,
+            stores: Object.values(storesMap)
+          };
+        };
+
+        // The backend returns `plans` array (cheapest, single_store, convenience)
+        // and a `baseline_single_store`.
+        const baselineTotal = data.baseline_single_store ? data.baseline_single_store.total : data.plans[0].total;
+
+        // Find specific plans
+        const cheapestPlan = data.plans.find((p: any) => p.mode === 'cheapest') || data.plans[0];
+        const valuePlan = data.baseline_single_store || cheapestPlan; 
+        const convPlan = data.plans.find((p: any) => p.mode === 'convenience') || data.plans[data.plans.length - 1];
+
+        processedPlans['cheapest'] = mapPlan(cheapestPlan, baselineTotal);
+        processedPlans['value'] = mapPlan(valuePlan, baselineTotal);
+        processedPlans['convenient'] = mapPlan(convPlan, baselineTotal);
+
+        setPlans(processedPlans);
+      } catch (err: any) {
+        setError(err.response?.data?.detail || "Failed to optimise basket");
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchOptimisation();
+  }, []);
+
+  if (loading) return <div className="p-12 text-center text-[#64748B]">Running AI Optimisation...</div>;
+  if (error) return <div className="p-12 text-center text-[#DC2626]">{error}</div>;
+  if (!plans) return null;
+
+  const plan = plans[mode];
 
   return (
     <div className="max-w-5xl mx-auto px-4 md:px-8 py-8 pb-24 md:pb-8">
@@ -71,32 +136,32 @@ export default function OptimisePage({ onNavigate }: Props) {
       </div>
 
       {/* Savings Summary */}
-      <div className={`rounded-2xl p-6 mb-6 ${mode === 'convenient' && plan.saving < 0 ? 'bg-[#FEF3C7]' : 'bg-[#0F2547]'}`}>
+      <div className={`rounded-2xl p-6 mb-6 ${plan.saving < 0 ? 'bg-[#FEF3C7]' : 'bg-[#0F2547]'}`}>
         <div className="flex items-center gap-4 flex-wrap">
           <div className="flex-1">
-            <div className={`text-sm font-medium mb-1 ${mode === 'convenient' && plan.saving < 0 ? 'text-[#92400E]' : 'text-[#94A3B8]'}`}>
+            <div className={`text-sm font-medium mb-1 ${plan.saving < 0 ? 'text-[#92400E]' : 'text-[#94A3B8]'}`}>
               {mode === 'cheapest' ? 'Optimised Shopping Plan — Cheapest' : mode === 'value' ? 'Optimised Plan — Best Value' : 'Convenience Plan — Single Store'}
             </div>
             <div className="flex items-center gap-6">
               <div>
-                <div className={`text-xs ${mode === 'convenient' && plan.saving < 0 ? 'text-[#92400E]/60' : 'text-[#94A3B8]'}`}>Original basket</div>
-                <div className={`text-2xl font-black line-through ${mode === 'convenient' && plan.saving < 0 ? 'text-[#92400E]/50' : 'text-[#94A3B8]'}`} style={{ fontFamily: 'Outfit' }}>K{plan.original}</div>
+                <div className={`text-xs ${plan.saving < 0 ? 'text-[#92400E]/60' : 'text-[#94A3B8]'}`}>Original basket</div>
+                <div className={`text-2xl font-black line-through ${plan.saving < 0 ? 'text-[#92400E]/50' : 'text-[#94A3B8]'}`} style={{ fontFamily: 'Outfit' }}>K{plan.original.toFixed(2)}</div>
               </div>
               <div className="text-3xl text-[#94A3B8]">→</div>
               <div>
-                <div className={`text-xs ${mode === 'convenient' && plan.saving < 0 ? 'text-[#92400E]/60' : 'text-[#94A3B8]'}`}>Optimised total</div>
-                <div className={`text-3xl font-black ${mode === 'convenient' && plan.saving < 0 ? 'text-[#92400E]' : 'text-white'}`} style={{ fontFamily: 'Outfit' }}>K{plan.total}</div>
+                <div className={`text-xs ${plan.saving < 0 ? 'text-[#92400E]/60' : 'text-[#94A3B8]'}`}>Optimised total</div>
+                <div className={`text-3xl font-black ${plan.saving < 0 ? 'text-[#92400E]' : 'text-white'}`} style={{ fontFamily: 'Outfit' }}>K{plan.total.toFixed(2)}</div>
               </div>
             </div>
           </div>
-          <div className={`text-center px-6 py-4 rounded-2xl ${mode === 'convenient' && plan.saving < 0 ? 'bg-[#FEE2E2]' : 'bg-[#16A34A]/20 border border-[#16A34A]/30'}`}>
-            <div className={`text-xs font-medium ${mode === 'convenient' && plan.saving < 0 ? 'text-[#DC2626]' : 'text-[#86EFAC]'}`}>
+          <div className={`text-center px-6 py-4 rounded-2xl ${plan.saving < 0 ? 'bg-[#FEE2E2]' : 'bg-[#16A34A]/20 border border-[#16A34A]/30'}`}>
+            <div className={`text-xs font-medium ${plan.saving < 0 ? 'text-[#DC2626]' : 'text-[#86EFAC]'}`}>
               {plan.saving >= 0 ? 'You save' : 'Extra cost'}
             </div>
-            <div className={`text-4xl font-black ${mode === 'convenient' && plan.saving < 0 ? 'text-[#DC2626]' : 'text-[#4ADE80]'}`} style={{ fontFamily: 'Outfit' }}>
-              {plan.saving >= 0 ? `K${plan.saving}` : `K${Math.abs(plan.saving)}`}
+            <div className={`text-4xl font-black ${plan.saving < 0 ? 'text-[#DC2626]' : 'text-[#4ADE80]'}`} style={{ fontFamily: 'Outfit' }}>
+              {plan.saving >= 0 ? `K${plan.saving.toFixed(2)}` : `K${Math.abs(plan.saving).toFixed(2)}`}
             </div>
-            <div className={`text-xs ${mode === 'convenient' && plan.saving < 0 ? 'text-[#DC2626]/70' : 'text-[#86EFAC]/70'}`}>
+            <div className={`text-xs ${plan.saving < 0 ? 'text-[#DC2626]/70' : 'text-[#86EFAC]/70'}`}>
               {plan.saving >= 0 ? `${((plan.saving / plan.original) * 100).toFixed(1)}% less` : 'for convenience'}
             </div>
           </div>
@@ -118,7 +183,7 @@ export default function OptimisePage({ onNavigate }: Props) {
                   <div className="text-xs text-[#64748B]">{store.products} products · {store.savings}</div>
                 </div>
                 <div className="text-right">
-                  <div className="text-2xl font-black" style={{ fontFamily: 'Outfit', color: store.color }}>K{store.total}</div>
+                  <div className="text-2xl font-black" style={{ fontFamily: 'Outfit', color: store.color }}>K{store.total.toFixed(2)}</div>
                 </div>
               </div>
               <div className="p-4 space-y-2">
@@ -133,27 +198,6 @@ export default function OptimisePage({ onNavigate }: Props) {
           ))}
         </div>
       </div>
-
-      {/* Tradeoff Note for convenience */}
-      {mode !== 'convenient' && (
-        <div className="bg-[#F8FAFC] rounded-2xl border border-[#E2E8F0] p-5 mb-6">
-          <h3 className="font-bold text-[#0F2547] mb-2" style={{ fontFamily: 'Outfit' }}>🚗 Convenience Alternative</h3>
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="text-sm text-[#475569]">Shop everything at <span className="font-semibold">Shoprite</span></div>
-              <div className="text-xs text-[#64748B] mt-0.5">1 store to visit · No extra travel needed</div>
-            </div>
-            <div className="text-right">
-              <div className="font-black text-xl text-[#0F2547]" style={{ fontFamily: 'Outfit' }}>K{PLAN.convenient.total}</div>
-              <div className="text-xs text-[#D97706] font-medium">K{PLAN.convenient.total - plan.total} more</div>
-            </div>
-          </div>
-          <div className="mt-3 p-3 rounded-xl bg-[#FEF3C7] text-xs text-[#92400E]">
-            💡 <span className="font-medium">"Save K{Math.abs(plan.saving)} less, but avoid visiting {plan.stores_visited - 1} extra store{plan.stores_visited - 1 !== 1 ? 's' : ''}."</span>
-          </div>
-          <button onClick={() => setMode('convenient')} className="mt-3 text-xs text-[#0F2547] font-medium hover:underline">Switch to convenience plan →</button>
-        </div>
-      )}
 
       {/* Apply Button */}
       <div className="flex gap-3">

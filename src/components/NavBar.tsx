@@ -229,7 +229,7 @@ function NotificationsDropdown({ onClose }: { onClose: () => void }) {
           >
             <div className="flex items-start gap-3">
               <span className="text-xl mt-0.5 flex-shrink-0">
-                {n.type === 'price_drop' ? '📉' : n.type === 'alert_reached' ? '✅' : n.type === 'deal' ? '🔥' : n.type === 'in_stock' ? '📦' : '📈'}
+                {n.type === 'price_drop' ? '' : n.type === 'alert_reached' ? '' : n.type === 'deal' ? '' : n.type === 'in_stock' ? '' : ''}
               </span>
               <div className="flex-1 min-w-0">
                 <div className="text-sm font-semibold text-[#1E293B]">{n.title}</div>

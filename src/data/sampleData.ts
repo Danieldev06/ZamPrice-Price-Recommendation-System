@@ -1,9 +1,9 @@
 export const STORES = [
-  { id: 'shoprite', name: 'Shoprite', color: '#E31837', logo: '🛒', avgBasket: 450, deals: 18, products: 934 },
-  { id: 'choppies', name: 'Choppies', color: '#0066CC', logo: '🏪', avgBasket: 438, deals: 12, products: 876 },
-  { id: 'picknpay', name: 'Pick n Pay', color: '#009F44', logo: '🛍️', avgBasket: 468, deals: 9, products: 812 },
-  { id: 'spar', name: 'Spar', color: '#007A33', logo: '🏬', avgBasket: 472, deals: 7, products: 654 },
-  { id: 'game', name: 'Game', color: '#E8291C', logo: '🎯', avgBasket: 490, deals: 5, products: 520 },
+  { id: 'shoprite', name: 'Shoprite', color: '#E31837', logo: '', avgBasket: 450, deals: 18, products: 934 },
+  { id: 'choppies', name: 'Choppies', color: '#0066CC', logo: '', avgBasket: 438, deals: 12, products: 876 },
+  { id: 'picknpay', name: 'Pick n Pay', color: '#009F44', logo: '', avgBasket: 468, deals: 9, products: 812 },
+  { id: 'spar', name: 'Spar', color: '#007A33', logo: '', avgBasket: 472, deals: 7, products: 654 },
+  { id: 'game', name: 'Game', color: '#E8291C', logo: '', avgBasket: 490, deals: 5, products: 520 },
 ];
 
 export const STORE_LOCATIONS = [
@@ -15,16 +15,16 @@ export const STORE_LOCATIONS = [
 ];
 
 export const CATEGORIES = [
-  { id: 'mealie', name: 'Mealie Meal', icon: '🌽', count: 24 },
+  { id: 'mealie', name: 'Mealie Meal', icon: '', count: 24 },
   { id: 'oil', name: 'Cooking Oil', icon: '🫙', count: 18 },
-  { id: 'sugar', name: 'Sugar', icon: '🧂', count: 12 },
-  { id: 'rice', name: 'Rice', icon: '🍚', count: 31 },
-  { id: 'bread', name: 'Bread', icon: '🍞', count: 16 },
-  { id: 'milk', name: 'Milk', icon: '🥛', count: 22 },
-  { id: 'eggs', name: 'Eggs', icon: '🥚', count: 8 },
-  { id: 'cereals', name: 'Cereals', icon: '🥣', count: 35 },
-  { id: 'beverages', name: 'Beverages', icon: '🥤', count: 64 },
-  { id: 'household', name: 'Household', icon: '🧴', count: 89 },
+  { id: 'sugar', name: 'Sugar', icon: '', count: 12 },
+  { id: 'rice', name: 'Rice', icon: '', count: 31 },
+  { id: 'bread', name: 'Bread', icon: '', count: 16 },
+  { id: 'milk', name: 'Milk', icon: '', count: 22 },
+  { id: 'eggs', name: 'Eggs', icon: '', count: 8 },
+  { id: 'cereals', name: 'Cereals', icon: '', count: 35 },
+  { id: 'beverages', name: 'Beverages', icon: '', count: 64 },
+  { id: 'household', name: 'Household', icon: '', count: 89 },
 ];
 
 export interface ProductPrice {
@@ -220,9 +220,9 @@ export const DEALS = [
 ];
 
 export const NOTIFICATIONS = [
-  { id: 'n1', type: 'price_drop', title: 'Price Drop 🎉', message: '5kg Mealie Meal dropped from K195 to K180 at Shoprite.', time: '5 min ago', read: false },
-  { id: 'n2', type: 'alert_reached', title: 'Target Reached ✅', message: 'Your price alert for Mealie Meal (K180) has been reached at Shoprite!', time: '1 hour ago', read: false },
-  { id: 'n3', type: 'deal', title: 'New Deal 🔥', message: 'Cooking Oil 5L now 14% OFF at Choppies — only this week.', time: '3 hours ago', read: false },
+  { id: 'n1', type: 'price_drop', title: 'Price Drop ', message: '5kg Mealie Meal dropped from K195 to K180 at Shoprite.', time: '5 min ago', read: false },
+  { id: 'n2', type: 'alert_reached', title: 'Target Reached ', message: 'Your price alert for Mealie Meal (K180) has been reached at Shoprite!', time: '1 hour ago', read: false },
+  { id: 'n3', type: 'deal', title: 'New Deal ', message: 'Cooking Oil 5L now 14% OFF at Choppies — only this week.', time: '3 hours ago', read: false },
   { id: 'n4', type: 'in_stock', title: 'Back in Stock', message: 'Long Grain Rice 1kg is back in stock at Pick n Pay.', time: 'Yesterday', read: true },
-  { id: 'n5', type: 'price_increase', title: 'Price Increase ⚠️', message: 'Cooking Oil 2L increased from K68 to K75 at Shoprite.', time: '2 days ago', read: true },
+  { id: 'n5', type: 'price_increase', title: 'Price Increase ', message: 'Cooking Oil 2L increased from K68 to K75 at Shoprite.', time: '2 days ago', read: true },
 ];

@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { CATEGORIES } from '../data/sampleData';
+import { useState, useEffect } from 'react';
+import api from '../api/client';
 
 type Page = 'landing' | 'dashboard' | 'search' | 'compare' | 'basket' | 'optimise' | 'history' | 'alerts' | 'deals' | 'supermarkets' | 'profile' | 'admin' | 'budget' | 'location' | 'substitutions';
 
@@ -7,26 +7,30 @@ interface Props {
   onNavigate: (page: Page) => void;
 }
 
-const STATS = [
-  { value: '4+', label: 'Supermarkets', icon: '🏪' },
-  { value: '1,000+', label: 'Products tracked', icon: '📦' },
-  { value: 'Live', label: 'Price updates', icon: '⚡' },
-  { value: 'AI', label: 'Smart savings', icon: '🧠' },
-];
+// Fallback icons for known categories
+const CATEGORY_ICONS: Record<string, string> = {
+  'Mealie Meal': '🌾',
+  'Cooking Oil': '🛢️',
+  'Sugar': '🍬',
+  'Rice': '🍚',
+  'Milk': '🥛',
+  'Bread': '🍞',
+  'Eggs': '🥚',
+  'General': '🛒'
+};
 
 const HOW_STEPS = [
   { n: '01', icon: '🔍', title: 'Search Products', desc: 'Type any product and see it across all stores instantly' },
-  { n: '02', icon: '📊', title: 'Compare Prices', desc: 'Side-by-side prices, unit costs, and stock status' },
+  { n: '02', icon: '⚖️', title: 'Compare Prices', desc: 'Side-by-side prices, unit costs, and stock status' },
   { n: '03', icon: '🛒', title: 'Build Your Basket', desc: 'Add items from any store into one smart basket' },
-  { n: '04', icon: '🏆', title: 'Get Your Plan', desc: 'AI calculates the cheapest and most convenient route' },
+  { n: '04', icon: '🤖', title: 'Get Your Plan', desc: 'AI calculates the cheapest and most convenient route' },
   { n: '05', icon: '💰', title: 'Save Money', desc: 'Shop smarter and keep more kwacha in your pocket' },
 ];
 
 const STORE_BRANDS = [
-  { name: 'Shoprite', accent: '#E31837', bg: '#FEF2F2', products: '934+' },
-  { name: 'Choppies', accent: '#0066CC', bg: '#EFF6FF', products: '876+' },
-  { name: 'Pick n Pay', accent: '#009F44', bg: '#F0FDF4', products: '812+' },
-  { name: 'Spar', accent: '#007A33', bg: '#F0FDF4', products: '654+' },
+  { name: 'Shoprite', accent: '#E31837', bg: '#FEF2F2', products: 'Live' },
+  { name: 'Choppies', accent: '#0066CC', bg: '#EFF6FF', products: 'Live' },
+  { name: 'Pick n Pay', accent: '#009F44', bg: '#F0FDF4', products: 'Live' },
 ];
 
 const TESTIMONIALS = [
@@ -37,6 +41,35 @@ const TESTIMONIALS = [
 
 export default function LandingPage({ onNavigate }: Props) {
   const [search, setSearch] = useState('');
+  const [dynamicCategories, setDynamicCategories] = useState<{id: string, name: string, icon: string}[]>([]);
+  const [productCount, setProductCount] = useState('1,000+');
+
+  // Fetch real data for the marketing page
+  useEffect(() => {
+    async function loadLandingData() {
+      try {
+        const res = await api.get('/products');
+        
+        // Update product count
+        if (res.data.length > 0) {
+           setProductCount(`${res.data.length}`);
+        }
+
+        // Extract unique categories
+        const cats = Array.from(new Set(res.data.map((p: any) => p.category).filter(Boolean)));
+        const mappedCats = cats.map((c: any) => ({
+          id: c.toLowerCase().replace(' ', '-'),
+          name: c,
+          icon: CATEGORY_ICONS[c] || '🛒'
+        }));
+        
+        setDynamicCategories(mappedCats);
+      } catch (err) {
+        console.error("Failed to load landing data", err);
+      }
+    }
+    loadLandingData();
+  }, []);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -76,7 +109,6 @@ export default function LandingPage({ onNavigate }: Props) {
 
       {/* ───── Hero ───── */}
       <section className="relative bg-[#0F2547] overflow-hidden">
-        {/* Background imagery */}
         <div className="absolute inset-0">
           <img
             src="https://images.unsplash.com/photo-1534723452862-4c874018d66d?w=1400&h=800&fit=crop&auto=format"
@@ -86,14 +118,12 @@ export default function LandingPage({ onNavigate }: Props) {
           <div className="absolute inset-0 bg-gradient-to-r from-[#0F2547] via-[#0F2547]/90 to-[#0F2547]/60" />
         </div>
 
-        {/* Decorative radial glows */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden">
           <div className="absolute -top-32 -right-32 w-[500px] h-[500px] rounded-full bg-[#D97706]/10 blur-3xl" />
           <div className="absolute bottom-0 left-1/4 w-[400px] h-[400px] rounded-full bg-[#16A34A]/8 blur-3xl" />
         </div>
 
         <div className="relative max-w-6xl mx-auto px-6 md:px-12 py-20 md:py-32 grid md:grid-cols-2 gap-12 items-center">
-          {/* Left copy */}
           <div>
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#D97706]/20 border border-[#D97706]/30 mb-7 text-[#FDE68A] text-xs font-semibold">
               🇿🇲 Zambia's #1 Price Comparison App
@@ -106,7 +136,6 @@ export default function LandingPage({ onNavigate }: Props) {
               Compare supermarket prices across Zambia and discover where your entire shopping basket costs less — at Shoprite, Choppies, Pick n Pay and more.
             </p>
 
-            {/* Search bar */}
             <form onSubmit={handleSearch} className="flex gap-2 mb-7 max-w-xl">
               <div className="flex-1 relative">
                 <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#64748B] text-lg">🔍</span>
@@ -126,7 +155,6 @@ export default function LandingPage({ onNavigate }: Props) {
               </button>
             </form>
 
-            {/* CTA Buttons */}
             <div className="flex flex-wrap gap-3">
               <button
                 onClick={() => onNavigate('dashboard')}
@@ -138,17 +166,16 @@ export default function LandingPage({ onNavigate }: Props) {
                 onClick={() => onNavigate('search')}
                 className="px-8 py-3.5 rounded-xl border border-white/25 text-white font-semibold text-sm hover:bg-white/10 transition-colors"
               >
-                📊 Compare Prices
+                🔍 Compare Prices
               </button>
             </div>
           </div>
 
-          {/* Right — floating product cards */}
           <div className="hidden md:flex flex-col gap-3 max-w-sm ml-auto">
             {[
-              { product: '5kg Mealie Meal', store: 'Shoprite', price: 185, was: 205, saving: 20, best: true },
-              { product: '5L Cooking Oil', store: 'Choppies', price: 159, was: 185, saving: 26, best: true },
-              { product: '2kg White Sugar', store: 'Shoprite', price: 48, was: 52, saving: 4, best: false },
+              { product: 'Cooking Oil 2L', store: 'Pick n Pay', price: 82.00, was: 87.00, saving: 5, best: true },
+              { product: 'Mealie Meal 25kg', store: 'Choppies', price: 285, was: 290, saving: 5, best: true },
+              { product: 'Sugar 2kg', store: 'Shoprite', price: 55, was: 55, saving: 0, best: false },
             ].map(c => (
               <div
                 key={c.product}
@@ -159,8 +186,8 @@ export default function LandingPage({ onNavigate }: Props) {
                   <div className="text-[#94A3B8] text-xs">{c.store}</div>
                 </div>
                 <div className="text-right flex-shrink-0">
-                  <div className="text-white font-black" style={{ fontFamily: 'Outfit' }}>K{c.price}</div>
-                  <div className="text-[#94A3B8] text-xs line-through">K{c.was}</div>
+                  <div className="text-white font-black" style={{ fontFamily: 'Outfit' }}>K{c.price.toFixed(2)}</div>
+                  {c.was > c.price && <div className="text-[#94A3B8] text-xs line-through">K{c.was.toFixed(2)}</div>}
                 </div>
                 {c.best && (
                   <div className="px-2 py-1 rounded-lg bg-[#16A34A] text-white text-xs font-bold flex-shrink-0">
@@ -169,14 +196,18 @@ export default function LandingPage({ onNavigate }: Props) {
                 )}
               </div>
             ))}
-            <div className="text-center text-xs text-[#64748B] mt-1">Sample prices · Updated daily</div>
+            <div className="text-center text-xs text-[#64748B] mt-1">Live pricing · Updated daily</div>
           </div>
         </div>
 
-        {/* Stats bar */}
         <div className="relative border-t border-white/10 bg-[#081730]/60 backdrop-blur-sm">
           <div className="max-w-6xl mx-auto px-6 md:px-12 py-5 grid grid-cols-2 md:grid-cols-4 gap-5">
-            {STATS.map(s => (
+            {[
+              { value: '3+', label: 'Supermarkets', icon: '🏪' },
+              { value: productCount, label: 'Products tracked', icon: '📦' },
+              { value: 'Live', label: 'Price updates', icon: '📡' },
+              { value: 'AI', label: 'Smart savings', icon: '🧠' },
+            ].map(s => (
               <div key={s.label} className="flex items-center gap-3">
                 <span className="text-xl">{s.icon}</span>
                 <div>
@@ -189,7 +220,7 @@ export default function LandingPage({ onNavigate }: Props) {
         </div>
       </section>
 
-      {/* ───── Popular Categories ───── */}
+      {/* ───── Popular Categories (Dynamic) ───── */}
       <section className="max-w-6xl mx-auto px-6 md:px-12 py-16">
         <div className="flex items-center justify-between mb-8">
           <div>
@@ -200,8 +231,8 @@ export default function LandingPage({ onNavigate }: Props) {
             View all →
           </button>
         </div>
-        <div className="grid grid-cols-5 md:grid-cols-10 gap-3">
-          {CATEGORIES.map(cat => (
+        <div className="grid grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-3">
+          {dynamicCategories.map(cat => (
             <button
               key={cat.id}
               onClick={() => onNavigate('search')}
@@ -256,7 +287,7 @@ export default function LandingPage({ onNavigate }: Props) {
           <div className="inline-block px-3 py-1 rounded-full bg-[#F0FDF4] text-[#16A34A] text-xs font-bold uppercase tracking-widest mb-3">Supported Stores</div>
           <h2 className="text-2xl font-black text-[#0F2547]" style={{ fontFamily: 'Outfit' }}>All your favourite supermarkets</h2>
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {STORE_BRANDS.map(store => (
             <button
               key={store.name}
@@ -271,14 +302,14 @@ export default function LandingPage({ onNavigate }: Props) {
                 {store.name[0]}
               </div>
               <div className="font-black text-[#1E293B] text-lg mb-0.5" style={{ fontFamily: 'Outfit' }}>{store.name}</div>
-              <div className="text-xs font-semibold mt-1" style={{ color: store.accent }}>{store.products} products</div>
+              <div className="text-xs font-semibold mt-1" style={{ color: store.accent }}>{store.products} Data</div>
               <div className="text-xs text-[#94A3B8] mt-0.5">📍 Lusaka & nationwide</div>
             </button>
           ))}
         </div>
       </section>
 
-      {/* ───── Why ZamPrice (features) ───── */}
+      {/* ───── Why ZamPrice ───── */}
       <section id="why" className="bg-[#0F2547] py-20 relative overflow-hidden">
         <div className="absolute inset-0 pointer-events-none">
           <div className="absolute top-0 right-0 w-96 h-96 rounded-full bg-[#D97706]/8 blur-3xl" />
@@ -291,10 +322,10 @@ export default function LandingPage({ onNavigate }: Props) {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
             {[
-              { icon: '📊', title: 'Cross-Store Comparison', desc: 'Compare prices for any product across Shoprite, Choppies, Pick n Pay, Spar and more — all in one place.' },
-              { icon: '⚖️', title: 'Unit-Price Analysis', desc: 'Find true value with price-per-kg, per-litre analysis. The cheapest pack isn\'t always the best deal.' },
-              { icon: '🏆', title: 'Basket Optimisation', desc: 'AI calculates the cheapest way to buy your whole shopping list, splitting intelligently across stores.' },
-              { icon: '📉', title: 'Price History & Alerts', desc: 'Track prices over 30 days, spot trends, and get notified the moment a price hits your target.' },
+              { icon: '⚖️', title: 'Cross-Store Comparison', desc: 'Compare prices for any product across Shoprite, Choppies, Pick n Pay — all in one place.' },
+              { icon: '📊', title: 'Unit-Price Analysis', desc: 'Find true value with price-per-kg, per-litre analysis. The cheapest pack isn\'t always the best deal.' },
+              { icon: '🤖', title: 'Basket Optimisation', desc: 'AI calculates the cheapest way to buy your whole shopping list, splitting intelligently across stores.' },
+              { icon: '📈', title: 'Price History & Alerts', desc: 'Track prices over time, spot trends, and get notified the moment a price hits your target.' },
               { icon: '🔄', title: 'Cheaper Alternatives', desc: 'Discover substitute products that fulfil the same need for less — matched by category, size and type.' },
               { icon: '💡', title: 'Explainable AI', desc: 'Every recommendation comes with a plain-language "Why?" so you always understand the reasoning.' },
             ].map(f => (
@@ -384,7 +415,7 @@ export default function LandingPage({ onNavigate }: Props) {
             </div>
           </div>
           <div className="border-t border-[#0F2547] pt-6 flex flex-col md:flex-row items-center justify-between gap-3">
-            <p className="text-[#475569] text-xs">© 2024 ZamPrice · Prices shown are sample/demo data. Always verify at store.</p>
+            <p className="text-[#475569] text-xs">© 2026 ZamPrice · Prices shown are sample/demo data. Always verify at store.</p>
             <p className="text-[#475569] text-xs">Built for Zambia 🇿🇲</p>
           </div>
         </div>

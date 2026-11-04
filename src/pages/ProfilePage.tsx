@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import api from '../api/client';
 
 type Page = 'landing' | 'dashboard' | 'search' | 'compare' | 'basket' | 'optimise' | 'history' | 'alerts' | 'deals' | 'supermarkets' | 'profile' | 'admin' | 'budget' | 'location' | 'substitutions';
 
@@ -6,50 +7,104 @@ interface Props {
   onNavigate: (page: Page) => void;
 }
 
+interface User {
+  id: number;
+  name: string;
+  email: string;
+  role: string;
+}
+
 const PREFS = [
   { id: 'lowest_price', label: 'Lowest price', icon: '💰' },
   { id: 'best_value', label: 'Best value per unit', icon: '⚖️' },
   { id: 'closest_store', label: 'Closest supermarket', icon: '📍' },
-  { id: 'fewer_stores', label: 'Fewer stores to visit', icon: '🚗' },
+  { id: 'fewer_stores', label: 'Fewer stores to visit', icon: '🏪' },
   { id: 'preferred_brands', label: 'Preferred brands', icon: '🏷️' },
-  { id: 'discounts', label: 'Discounts & promotions', icon: '🎯' },
+  { id: 'discounts', label: 'Discounts & promotions', icon: '🔥' },
   { id: 'availability', label: 'Product availability', icon: '📦' },
 ];
 
-const STORES = ['Shoprite', 'Choppies', 'Pick n Pay', 'Spar', 'Game'];
-
-const SAVED_LISTS = [
-  { name: 'Weekly Groceries', items: 12, updated: '2 Sep 2024' },
-  { name: 'Monthly Staples', items: 8, updated: '28 Aug 2024' },
-  { name: "Kids' Snacks", items: 5, updated: '25 Aug 2024' },
-];
+const STORES = ['Shoprite', 'Choppies', 'Pick n Pay'];
 
 export default function ProfilePage({ onNavigate }: Props) {
   const [activeTab, setActiveTab] = useState<'preferences' | 'lists' | 'settings' | 'account'>('preferences');
+  
+  // Real User State
+  const [user, setUser] = useState<User | null>(null);
+  const [totalSaved, setTotalSaved] = useState(0);
+  const [loading, setLoading] = useState(true);
+
+  // Local preferences (since backend doesn't have a save profile endpoint yet)
   const [selectedPrefs, setSelectedPrefs] = useState(['lowest_price', 'best_value', 'discounts']);
   const [selectedStores, setSelectedStores] = useState(['Shoprite', 'Choppies']);
   const [notifPush, setNotifPush] = useState(true);
   const [notifEmail, setNotifEmail] = useState(true);
   const [notifSMS, setNotifSMS] = useState(false);
 
+  useEffect(() => {
+    async function loadProfile() {
+      try {
+        // 1. Fetch real user data
+        const userRes = await api.get<User>('/auth/me');
+        setUser(userRes.data);
+
+        // 2. Calculate total saved based on current basket vs single store
+        const saved = localStorage.getItem('zamprice_basket');
+        const items = saved ? JSON.parse(saved) : [{ product_id: 1, quantity: 1 }, { product_id: 5, quantity: 2 }];
+        
+        if (items.length > 0) {
+          const optRes = await api.post('/basket/optimize', {
+            items, mode: 'cheapest', convenience_weight: 0, convenience_cost_per_store: 0
+          });
+          const data = optRes.data;
+          const baseline = data.baseline_single_store ? data.baseline_single_store.total : 0;
+          const optimized = data.plans[0] ? data.plans[0].total : baseline;
+          
+          setTotalSaved(baseline > optimized ? baseline - optimized : 0);
+        }
+      } catch (err) {
+        console.error("Failed to load profile", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadProfile();
+  }, []);
+
+  const handleSignOut = () => {
+    localStorage.removeItem('zamprice_token');
+    localStorage.removeItem('zamprice_basket'); // Optional: clear basket on logout
+    onNavigate('landing');
+  };
+
   const togglePref = (id: string) => setSelectedPrefs(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
   const toggleStore = (s: string) => setSelectedStores(prev => prev.includes(s) ? prev.filter(x => x !== s) : [...prev, s]);
+
+  if (loading) return <div className="p-12 text-center text-[#64748B]">Loading profile...</div>;
+  if (!user) return <div className="p-12 text-center text-[#DC2626]">Not logged in.</div>;
+
+  // Generate initials for avatar (e.g., "Demo User" -> "DU")
+  const initials = user.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
 
   return (
     <div className="max-w-4xl mx-auto px-4 md:px-8 py-8 pb-24 md:pb-8">
       {/* Profile Header */}
       <div className="bg-[#0F2547] rounded-2xl p-6 mb-6 flex items-center gap-5">
         <div className="w-16 h-16 rounded-2xl bg-[#D97706] flex items-center justify-center text-white text-2xl font-black flex-shrink-0" style={{ fontFamily: 'Outfit' }}>
-          CM
+          {initials}
         </div>
         <div className="flex-1">
-          <div className="text-xl font-black text-white" style={{ fontFamily: 'Outfit' }}>Chanda Mutale</div>
-          <div className="text-sm text-[#94A3B8]">chanda.mutale@gmail.com</div>
-          <div className="text-xs text-[#64748B] mt-1">📍 Kabulonga, Lusaka · Member since January 2024</div>
+          <div className="text-xl font-black text-white" style={{ fontFamily: 'Outfit' }}>{user.name}</div>
+          <div className="text-sm text-[#94A3B8]">{user.email}</div>
+          <div className="text-xs text-[#64748B] mt-1">
+            🇿🇲 {user.role === 'admin' ? 'Administrator' : 'Member'} · Lusaka, Zambia
+          </div>
         </div>
         <div className="text-right hidden md:block">
-          <div className="text-xs text-[#94A3B8] mb-1">Total saved with ZamPrice</div>
-          <div className="text-3xl font-black text-[#4ADE80]" style={{ fontFamily: 'Outfit' }}>K1,247</div>
+          <div className="text-xs text-[#94A3B8] mb-1">Est. savings with ZamPrice</div>
+          <div className="text-3xl font-black text-[#4ADE80]" style={{ fontFamily: 'Outfit' }}>
+            K{totalSaved.toFixed(2)}
+          </div>
         </div>
       </div>
 
@@ -109,7 +164,9 @@ export default function ProfilePage({ onNavigate }: Props) {
             </div>
           </div>
 
-          <button className="w-full py-3.5 rounded-2xl bg-[#0F2547] text-white font-bold hover:bg-[#1A3A6B] transition-colors">
+          <button 
+            onClick={() => alert("Preferences saved locally! (Backend endpoint coming soon)")}
+            className="w-full py-3.5 rounded-2xl bg-[#0F2547] text-white font-bold hover:bg-[#1A3A6B] transition-colors">
             Save Preferences
           </button>
         </div>
@@ -123,18 +180,27 @@ export default function ProfilePage({ onNavigate }: Props) {
               + New List
             </button>
           </div>
-          {SAVED_LISTS.map(list => (
-            <div key={list.name} className="bg-white rounded-2xl border border-[#E2E8F0] p-5 flex items-center gap-4 hover:shadow-sm transition-all cursor-pointer">
-              <div className="w-12 h-12 rounded-2xl bg-[#EFF6FF] flex items-center justify-center text-2xl flex-shrink-0">🛒</div>
-              <div className="flex-1">
-                <div className="font-bold text-[#1E293B]" style={{ fontFamily: 'Outfit' }}>{list.name}</div>
-                <div className="text-xs text-[#64748B]">{list.items} items · Updated {list.updated}</div>
+          
+          <div className="bg-white rounded-2xl border border-[#E2E8F0] p-5 flex items-center gap-4 hover:shadow-sm transition-all cursor-pointer" onClick={() => onNavigate('basket')}>
+            <div className="w-12 h-12 rounded-2xl bg-[#EFF6FF] flex items-center justify-center text-2xl flex-shrink-0">🛒</div>
+            <div className="flex-1">
+              <div className="font-bold text-[#1E293B]" style={{ fontFamily: 'Outfit' }}>Current Basket</div>
+              <div className="text-xs text-[#64748B]">
+                {JSON.parse(localStorage.getItem('zamprice_basket') || '[]').length} items · Updated just now
               </div>
-              <button onClick={() => onNavigate('basket')} className="px-3 py-2 rounded-xl bg-[#F1F5F9] text-[#475569] text-xs font-semibold hover:bg-[#E2E8F0] transition-colors">
-                Open →
-              </button>
             </div>
-          ))}
+            <button className="px-3 py-2 rounded-xl bg-[#F1F5F9] text-[#475569] text-xs font-semibold hover:bg-[#E2E8F0] transition-colors">
+              Open →
+            </button>
+          </div>
+
+          <div className="bg-white rounded-2xl border border-[#E2E8F0] p-5 flex items-center gap-4 opacity-50">
+            <div className="w-12 h-12 rounded-2xl bg-[#EFF6FF] flex items-center justify-center text-2xl flex-shrink-0">📅</div>
+            <div className="flex-1">
+              <div className="font-bold text-[#1E293B]" style={{ fontFamily: 'Outfit' }}>Weekly Groceries (Mock)</div>
+              <div className="text-xs text-[#64748B]">12 items · Updated 2 Sep 2024</div>
+            </div>
+          </div>
         </div>
       )}
 
@@ -159,17 +225,6 @@ export default function ProfilePage({ onNavigate }: Props) {
               </div>
             ))}
           </div>
-          <div className="mt-6">
-            <h4 className="font-semibold text-sm text-[#1E293B] mb-3">Notify me about</h4>
-            <div className="space-y-2">
-              {['Price drops on my watchlist', 'Price alerts reached', 'New deals and promotions', 'Back-in-stock products', 'Weekly savings summary'].map(item => (
-                <label key={item} className="flex items-center gap-3 py-2 cursor-pointer">
-                  <input type="checkbox" defaultChecked className="w-4 h-4 accent-[#0F2547]" />
-                  <span className="text-sm text-[#475569]">{item}</span>
-                </label>
-              ))}
-            </div>
-          </div>
         </div>
       )}
 
@@ -178,25 +233,29 @@ export default function ProfilePage({ onNavigate }: Props) {
           <div className="bg-white rounded-2xl border border-[#E2E8F0] p-6">
             <h3 className="font-bold text-[#0F2547] mb-5" style={{ fontFamily: 'Outfit' }}>Personal Information</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {[
-                { label: 'First Name', value: 'Chanda' },
-                { label: 'Last Name', value: 'Mutale' },
-                { label: 'Email', value: 'chanda.mutale@gmail.com' },
-                { label: 'Phone', value: '+260 97 123 4567' },
-                { label: 'City', value: 'Lusaka' },
-                { label: 'Area', value: 'Kabulonga' },
-              ].map(f => (
-                <div key={f.label}>
-                  <label className="text-xs font-semibold text-[#64748B] uppercase tracking-wide mb-1.5 block">{f.label}</label>
-                  <input defaultValue={f.value} className="w-full px-4 py-3 rounded-xl border border-[#E2E8F0] text-sm focus:outline-none focus:ring-2 focus:ring-[#0F2547]/20" />
-                </div>
-              ))}
+              <div>
+                <label className="text-xs font-semibold text-[#64748B] uppercase tracking-wide mb-1.5 block">Full Name</label>
+                <input disabled value={user.name} className="w-full px-4 py-3 rounded-xl border border-[#E2E8F0] text-sm bg-gray-50 text-gray-500" />
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-[#64748B] uppercase tracking-wide mb-1.5 block">Email Address</label>
+                <input disabled value={user.email} className="w-full px-4 py-3 rounded-xl border border-[#E2E8F0] text-sm bg-gray-50 text-gray-500" />
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-[#64748B] uppercase tracking-wide mb-1.5 block">Account Type</label>
+                <input disabled value={user.role === 'admin' ? 'Administrator' : 'Standard User'} className="w-full px-4 py-3 rounded-xl border border-[#E2E8F0] text-sm bg-gray-50 text-gray-500" />
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-[#64748B] uppercase tracking-wide mb-1.5 block">Phone</label>
+                <input defaultValue="+260 97 123 4567" className="w-full px-4 py-3 rounded-xl border border-[#E2E8F0] text-sm focus:outline-none focus:ring-2 focus:ring-[#0F2547]/20" />
+              </div>
             </div>
             <button className="mt-5 px-6 py-3 rounded-xl bg-[#0F2547] text-white font-bold text-sm hover:bg-[#1A3A6B] transition-colors">
               Save Changes
             </button>
           </div>
-          <button onClick={() => onNavigate('landing')} className="w-full py-3.5 rounded-2xl border border-[#FEE2E2] text-[#DC2626] text-sm font-semibold hover:bg-[#FEF2F2] transition-colors">
+          
+          <button onClick={handleSignOut} className="w-full py-3.5 rounded-2xl border border-[#FEE2E2] text-[#DC2626] text-sm font-semibold hover:bg-[#FEF2F2] transition-colors">
             Sign Out
           </button>
         </div>

@@ -1,4 +1,14 @@
-﻿node_modules/
-dist/
+﻿# Python
+venv/
+__pycache__/
+*.pyc
+*.db
 .env
-*.log
+
+# Node
+node_modules/
+dist/
+
+# OS
+.DS_Store
+Thumbs.db

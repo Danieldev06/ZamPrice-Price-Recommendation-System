@@ -27,7 +27,7 @@ export default function LoginPage({ onNavigate }: Props) {
       } else {
         await login(email, password);
       }
-      onNavigate('dashboard'); // Send to dashboard on success
+      onNavigate('dashboard');
     } catch (err: any) {
       setError(err.response?.data?.detail || 'Authentication failed. Check your credentials.');
     } finally {
@@ -36,11 +36,31 @@ export default function LoginPage({ onNavigate }: Props) {
   };
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center p-4">
-      <div className="bg-white rounded-3xl border border-[#E2E8F0] w-full max-w-md p-8 shadow-xl">
+    <div className="min-h-screen relative bg-[#0F2547] flex items-center justify-center p-4 overflow-hidden">
+      
+      {/* Background Imagery (Matched from Landing Page) */}
+      <div className="absolute inset-0">
+        <img
+          src="https://images.unsplash.com/photo-1534723452862-4c874018d66d?w=1400&h=800&fit=crop&auto=format"
+          alt="Zambian market"
+          className="w-full h-full object-cover opacity-15"
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-[#0F2547] via-[#0F2547]/90 to-[#0F2547]/60" />
+      </div>
+
+      {/* Decorative radial glows */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        <div className="absolute -top-32 -right-32 w-[500px] h-[500px] rounded-full bg-[#D97706]/10 blur-3xl" />
+        <div className="absolute bottom-0 left-1/4 w-[400px] h-[400px] rounded-full bg-[#16A34A]/8 blur-3xl" />
+      </div>
+
+      {/* Login Card */}
+      <div className="relative bg-white rounded-3xl border border-[#E2E8F0] w-full max-w-md p-8 shadow-2xl z-10">
+        
+        {/* Logo & Header */}
         <div className="text-center mb-8">
           <div className="w-12 h-12 rounded-xl bg-[#0F2547] flex items-center justify-center shadow-sm mx-auto mb-4">
-            <span className="text-[#D97706] font-black text-xl" style={{ fontFamily: 'Outfit' }}>Z</span>
+            <span className="text-[#D97706] font-black text-2xl" style={{ fontFamily: 'Outfit' }}>Z</span>
           </div>
           <h1 className="text-2xl font-black text-[#0F2547]" style={{ fontFamily: 'Outfit' }}>
             {isRegister ? 'Create an Account' : 'Welcome Back'}
@@ -50,6 +70,7 @@ export default function LoginPage({ onNavigate }: Props) {
           </p>
         </div>
 
+        {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
           {isRegister && (
             <div>
@@ -59,7 +80,7 @@ export default function LoginPage({ onNavigate }: Props) {
                 value={name}
                 onChange={e => setName(e.target.value)}
                 required
-                className="w-full px-4 py-3 rounded-xl border border-[#E2E8F0] text-sm focus:outline-none focus:ring-2 focus:ring-[#0F2547]/20"
+                className="w-full px-4 py-3 rounded-xl border border-[#E2E8F0] text-sm focus:outline-none focus:ring-2 focus:ring-[#0F2547]/20 focus:border-[#0F2547] transition-all"
                 placeholder="e.g. Chanda Mutale"
               />
             </div>
@@ -72,7 +93,7 @@ export default function LoginPage({ onNavigate }: Props) {
               value={email}
               onChange={e => setEmail(e.target.value)}
               required
-              className="w-full px-4 py-3 rounded-xl border border-[#E2E8F0] text-sm focus:outline-none focus:ring-2 focus:ring-[#0F2547]/20"
+              className="w-full px-4 py-3 rounded-xl border border-[#E2E8F0] text-sm focus:outline-none focus:ring-2 focus:ring-[#0F2547]/20 focus:border-[#0F2547] transition-all"
               placeholder="you@example.com"
             />
           </div>
@@ -84,22 +105,27 @@ export default function LoginPage({ onNavigate }: Props) {
               value={password}
               onChange={e => setPassword(e.target.value)}
               required
-              className="w-full px-4 py-3 rounded-xl border border-[#E2E8F0] text-sm focus:outline-none focus:ring-2 focus:ring-[#0F2547]/20"
+              className="w-full px-4 py-3 rounded-xl border border-[#E2E8F0] text-sm focus:outline-none focus:ring-2 focus:ring-[#0F2547]/20 focus:border-[#0F2547] transition-all"
               placeholder="••••••••"
             />
           </div>
 
-          {error && <div className="p-3 rounded-xl bg-[#FEE2E2] text-[#DC2626] text-sm font-medium">{error}</div>}
+          {error && (
+            <div className="p-3 rounded-xl bg-[#FEE2E2] border border-[#FECACA] text-[#DC2626] text-sm font-medium">
+              {error}
+            </div>
+          )}
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-3.5 rounded-xl bg-[#0F2547] text-white font-bold text-sm hover:bg-[#1A3A6B] transition-colors disabled:opacity-50"
+            className="w-full py-3.5 rounded-xl bg-[#D97706] text-white font-bold text-sm hover:bg-[#B45309] transition-colors disabled:opacity-50 shadow-md mt-2"
           >
             {loading ? 'Processing...' : isRegister ? 'Create Account' : 'Sign In'}
           </button>
         </form>
 
+        {/* Toggle Login/Register */}
         <div className="mt-6 text-center">
           <button 
             onClick={() => { setIsRegister(!isRegister); setError(''); }}
@@ -109,8 +135,12 @@ export default function LoginPage({ onNavigate }: Props) {
           </button>
         </div>
 
+        {/* Back to Landing */}
         <div className="mt-6 pt-6 border-t border-[#E2E8F0] text-center">
-          <button onClick={() => onNavigate('landing')} className="text-xs text-[#64748B] hover:text-[#0F2547]">
+          <button 
+            onClick={() => onNavigate('landing')} 
+            className="text-xs text-[#64748B] hover:text-[#0F2547] font-medium transition-colors"
+          >
             ← Back to Landing Page
           </button>
         </div>

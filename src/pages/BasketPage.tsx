@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import api from '../api/client';
+import { ShoppingBasket, Zap, Wallet, Crown, TrendingDown, Trash2 } from 'lucide-react';
 
 type Page = 'landing' | 'dashboard' | 'search' | 'compare' | 'basket' | 'optimise' | 'history' | 'alerts' | 'deals' | 'supermarkets' | 'profile' | 'admin' | 'budget' | 'location' | 'substitutions';
 
@@ -31,11 +32,9 @@ export default function BasketPage({ onNavigate }: Props) {
   const [items, setItems] = useState<BasketItem[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Fetch initial basket data
   useEffect(() => {
     async function loadBasket() {
       try {
-        // For demo purposes, we'll grab the first 3 products from the DB
         const prodRes = await api.get<Product[]>('/products');
         const topProducts = prodRes.data.slice(0, 3);
 
@@ -88,7 +87,6 @@ export default function BasketPage({ onNavigate }: Props) {
   };
 
   const handleOptimise = () => {
-    // Save to localStorage so OptimisePage can read it
     const basketData = items.map(i => ({ product_id: i.product.id, quantity: i.qty }));
     localStorage.setItem('zamprice_basket', JSON.stringify(basketData));
     onNavigate('optimise');
@@ -109,7 +107,6 @@ export default function BasketPage({ onNavigate }: Props) {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Items List */}
         <div className="lg:col-span-2 space-y-3">
           {items.map((item, idx) => {
             const currentPrice = getPrice(item);
@@ -119,8 +116,8 @@ export default function BasketPage({ onNavigate }: Props) {
             return (
               <div key={item.product.id} className="bg-white rounded-2xl border border-[#E2E8F0] p-4">
                 <div className="flex gap-4">
-                  <div className="w-16 h-16 rounded-xl bg-[#F1F5F9] flex-shrink-0 flex items-center justify-center text-2xl">
-                    🛒
+                  <div className="w-16 h-16 rounded-xl bg-[#F1F5F9] flex-shrink-0 flex items-center justify-center">
+                    <ShoppingBasket className="text-[#CBD5E1]" size={28} />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-2">
@@ -130,16 +127,17 @@ export default function BasketPage({ onNavigate }: Props) {
                         </div>
                         <div className="text-xs text-[#64748B]">{item.product.brand || 'Generic'}</div>
                       </div>
-                      <button onClick={() => removeItem(idx)} className="text-[#94A3B8] hover:text-[#DC2626] transition-colors text-lg leading-none">×</button>
+                      <button onClick={() => removeItem(idx)} className="text-[#94A3B8] hover:text-[#DC2626] transition-colors">
+                        <Trash2 size={18} />
+                      </button>
                     </div>
 
-                    {/* Store Selector */}
                     <div className="mt-2 flex flex-wrap gap-1.5">
                       {item.prices.map((p, i) => (
                         <button key={p.supermarket}
                           onClick={() => setItems(prev => prev.map((it, ix) => ix === idx ? { ...it, selectedStore: p.supermarket } : it))}
                           className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors ${item.selectedStore === p.supermarket ? 'bg-[#0F2547] text-white' : 'bg-[#F1F5F9] text-[#475569] hover:bg-[#E2E8F0]'}`}>
-                          {i === 0 && <span className="text-[#D97706]">👑</span>}
+                          {i === 0 && <Crown size={12} className="text-[#D97706]" />}
                           {p.supermarket}
                           <span className={`font-bold ${i === 0 ? 'text-[#4ADE80]' : ''}`}>K{p.effective_price.toFixed(2)}</span>
                         </button>
@@ -149,7 +147,6 @@ export default function BasketPage({ onNavigate }: Props) {
                 </div>
 
                 <div className="flex items-center justify-between mt-3 pt-3 border-t border-[#F1F5F9]">
-                  {/* Qty Controls */}
                   <div className="flex items-center gap-2">
                     <button onClick={() => updateQty(idx, -1)} className="w-7 h-7 rounded-lg bg-[#F1F5F9] text-[#475569] hover:bg-[#E2E8F0] transition-colors text-sm font-bold">−</button>
                     <span className="text-sm font-semibold w-4 text-center text-[#1E293B]">{item.qty}</span>
@@ -162,7 +159,9 @@ export default function BasketPage({ onNavigate }: Props) {
                       <div className="text-xs text-[#D97706]">K{((currentPrice - best) * item.qty).toFixed(2)} more than best</div>
                     )}
                     {isBest && (
-                      <div className="text-xs text-[#16A34A] font-medium">👑 Best price</div>
+                      <div className="text-xs text-[#16A34A] font-medium flex items-center justify-end gap-1">
+                         <Crown size={12} /> Best price
+                      </div>
                     )}
                   </div>
                 </div>
@@ -172,7 +171,9 @@ export default function BasketPage({ onNavigate }: Props) {
 
           {items.length === 0 && (
             <div className="text-center py-16 bg-white rounded-2xl border border-[#E2E8F0]">
-              <div className="text-5xl mb-4">🛒</div>
+              <div className="flex justify-center mb-4">
+                <ShoppingBasket className="text-[#CBD5E1]" size={64} />
+              </div>
               <h3 className="text-lg font-bold text-[#1E293B] mb-2" style={{ fontFamily: 'Outfit' }}>Your basket is empty</h3>
               <p className="text-sm text-[#64748B] mb-4">Start comparing prices to add products</p>
               <button onClick={() => onNavigate('search')} className="px-6 py-3 rounded-xl bg-[#0F2547] text-white text-sm font-semibold">Browse Products</button>
@@ -180,7 +181,6 @@ export default function BasketPage({ onNavigate }: Props) {
           )}
         </div>
 
-        {/* Summary Panel */}
         <div className="space-y-4">
           <div className="bg-white rounded-2xl border border-[#E2E8F0] p-5">
             <h3 className="font-bold text-[#0F2547] mb-4" style={{ fontFamily: 'Outfit' }}>Basket Summary</h3>
@@ -202,7 +202,7 @@ export default function BasketPage({ onNavigate }: Props) {
 
             {saving > 0 && (
               <div className="flex items-center gap-3 p-3 rounded-xl bg-[#DCFCE7] mb-4">
-                <span className="text-xl">💰</span>
+                <TrendingDown size={20} className="text-[#16A34A]" />
                 <div>
                   <div className="text-sm font-bold text-[#16A34A]">Potential K{saving.toFixed(2)} savings</div>
                   <div className="text-xs text-[#16A34A]/70">by optimising across stores</div>
@@ -210,13 +210,11 @@ export default function BasketPage({ onNavigate }: Props) {
               </div>
             )}
 
-            <button onClick={handleOptimise}
-              className="w-full py-3.5 rounded-xl bg-[#0F2547] text-white font-bold text-sm hover:bg-[#1A3A6B] transition-colors mb-2">
-              ⚡ Optimise My Basket
+            <button onClick={handleOptimise} className="w-full py-3.5 rounded-xl bg-[#0F2547] text-white font-bold text-sm hover:bg-[#1A3A6B] transition-colors mb-2 flex items-center justify-center gap-2">
+              <Zap size={18} /> Optimise My Basket
             </button>
-            <button onClick={() => onNavigate('budget')}
-              className="w-full py-3 rounded-xl border border-[#E2E8F0] text-sm font-semibold text-[#475569] hover:bg-[#F8FAFC] transition-colors">
-              💰 Smart Budget Mode
+            <button onClick={() => onNavigate('budget')} className="w-full py-3 rounded-xl border border-[#E2E8F0] text-sm font-semibold text-[#475569] hover:bg-[#F8FAFC] transition-colors flex items-center justify-center gap-2">
+              <Wallet size={18} /> Smart Budget Mode
             </button>
           </div>
         </div>

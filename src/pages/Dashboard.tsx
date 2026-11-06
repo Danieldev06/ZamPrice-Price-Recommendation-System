@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import api from '../api/client';
 import { useAuth } from '../context/AuthContext';
+import { Search, Wallet, Zap, TrendingUp, Bell, ShoppingBasket } from 'lucide-react';
 
 type Page = 'landing' | 'dashboard' | 'search' | 'compare' | 'basket' | 'optimise' | 'history' | 'alerts' | 'deals' | 'supermarkets' | 'profile' | 'admin' | 'budget' | 'location' | 'substitutions';
 
@@ -23,24 +24,19 @@ interface Plan {
 }
 
 export default function Dashboard({ onNavigate, onSelectProduct }: Props) {
-  // 1. Get the real user from context
   const { user } = useAuth(); 
-  
   const [searchVal, setSearchVal] = useState('');
   const [products, setProducts] = useState<Product[]>([]);
   const [aiPlan, setAiPlan] = useState<Plan | null>(null);
 
-  // 2. Extract the first name (fallback to 'Shopper' if not found)
   const firstName = user?.name ? user.name.split(' ')[0] : 'Shopper';
 
-  // Fetch products and run the AI optimizer for the dashboard widget
   useEffect(() => {
     async function loadDashboard() {
       try {
         const prodRes = await api.get<Product[]>('/products');
         setProducts(prodRes.data.slice(0, 4));
 
-        // Get basket from localStorage or use default
         const saved = localStorage.getItem('zamprice_basket');
         const items = saved ? JSON.parse(saved) : [{ product_id: 1, quantity: 1 }, { product_id: 5, quantity: 2 }];
 
@@ -79,17 +75,16 @@ export default function Dashboard({ onNavigate, onSelectProduct }: Props) {
         <div>
           <div className="text-sm text-[#94A3B8] font-medium mb-1">Today · Lusaka, Zambia</div>
           <h1 className="text-3xl md:text-4xl font-black text-[#0F2547] leading-tight" style={{ fontFamily: 'Outfit' }}>
-            {/* 3. Use the dynamic firstName variable here */}
             Welcome back, <span className="text-[#D97706]">{firstName}</span> 👋
           </h1>
           <p className="text-[#64748B] mt-1">What are you shopping for today?</p>
         </div>
         <div className="flex gap-2 flex-shrink-0">
-          <button onClick={() => onNavigate('budget')} className="px-4 py-2.5 rounded-xl border border-[#E2E8F0] bg-white text-sm font-semibold text-[#475569] hover:bg-[#F8FAFC] transition-colors">
-            💰 Budget Mode
+          <button onClick={() => onNavigate('budget')} className="px-4 py-2.5 rounded-xl border border-[#E2E8F0] bg-white text-sm font-semibold text-[#475569] hover:bg-[#F8FAFC] transition-colors flex items-center gap-2">
+            <Wallet size={18} /> Budget Mode
           </button>
-          <button onClick={() => onNavigate('basket')} className="px-4 py-2.5 rounded-xl bg-[#D97706] text-white text-sm font-bold hover:bg-[#B45309] transition-colors">
-            ⚡ Optimise Basket
+          <button onClick={() => onNavigate('basket')} className="px-4 py-2.5 rounded-xl bg-[#D97706] text-white text-sm font-bold hover:bg-[#B45309] transition-colors flex items-center gap-2">
+            <Zap size={18} /> Optimise Basket
           </button>
         </div>
       </div>
@@ -97,7 +92,7 @@ export default function Dashboard({ onNavigate, onSelectProduct }: Props) {
       {/* Search */}
       <form onSubmit={handleSearch} className="flex gap-2">
         <div className="flex-1 relative">
-          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#94A3B8] text-lg">🔍</span>
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[#94A3B8]" size={20} />
           <input
             type="text"
             value={searchVal}
@@ -173,23 +168,32 @@ export default function Dashboard({ onNavigate, onSelectProduct }: Props) {
         {/* Quick Actions */}
         <div className="flex flex-col gap-3">
           <div className="text-xs font-semibold text-[#94A3B8] uppercase tracking-widest mb-1">Quick Actions</div>
+          
           <button onClick={() => onNavigate('search')} className="flex items-center gap-3.5 p-4 rounded-xl border-2 border-[#BFDBFE] bg-[#EFF6FF] hover:shadow-sm transition-all group">
-            <span className="text-2xl">🔍</span>
-            <div className="flex-1 min-w-0">
+            <div className="w-10 h-10 rounded-lg bg-blue-200 flex items-center justify-center flex-shrink-0">
+              <Search className="text-blue-700" size={20} />
+            </div>
+            <div className="flex-1 min-w-0 text-left">
               <div className="font-semibold text-sm text-[#1E293B]">Compare Prices</div>
               <div className="text-xs text-[#64748B] truncate">All products live</div>
             </div>
           </button>
+
           <button onClick={() => onNavigate('history')} className="flex items-center gap-3.5 p-4 rounded-xl border-2 border-[#BBF7D0] bg-[#F0FDF4] hover:shadow-sm transition-all group">
-            <span className="text-2xl">📈</span>
-            <div className="flex-1 min-w-0">
+            <div className="w-10 h-10 rounded-lg bg-green-200 flex items-center justify-center flex-shrink-0">
+              <TrendingUp className="text-green-700" size={20} />
+            </div>
+            <div className="flex-1 min-w-0 text-left">
               <div className="font-semibold text-sm text-[#1E293B]">Price History</div>
               <div className="text-xs text-[#64748B] truncate">See recent trends</div>
             </div>
           </button>
+
           <button onClick={() => onNavigate('alerts')} className="flex items-center gap-3.5 p-4 rounded-xl border-2 border-[#FDE68A] bg-[#FEF9C3] hover:shadow-sm transition-all group">
-            <span className="text-2xl">🔔</span>
-            <div className="flex-1 min-w-0">
+            <div className="w-10 h-10 rounded-lg bg-yellow-200 flex items-center justify-center flex-shrink-0">
+              <Bell className="text-yellow-700" size={20} />
+            </div>
+            <div className="flex-1 min-w-0 text-left">
               <div className="font-semibold text-sm text-[#1E293B]">Price Alerts</div>
               <div className="text-xs text-[#64748B] truncate">Manage notifications</div>
             </div>
@@ -210,8 +214,8 @@ export default function Dashboard({ onNavigate, onSelectProduct }: Props) {
               onClick={() => { onSelectProduct?.(product.id); onNavigate('compare'); }}
               className="w-full flex items-center gap-4 p-4 bg-white rounded-2xl border border-[#E2E8F0] hover:shadow-sm hover:border-[#CBD5E1] transition-all text-left group"
             >
-              <div className="w-14 h-14 rounded-xl bg-[#F1F5F9] flex-shrink-0 flex items-center justify-center text-2xl">
-                🛒
+              <div className="w-14 h-14 rounded-xl bg-[#F1F5F9] flex-shrink-0 flex items-center justify-center">
+                <ShoppingBasket className="text-[#94A3B8]" size={28} />
               </div>
               <div className="flex-1 min-w-0">
                 <div className="font-semibold text-sm text-[#1E293B]" style={{ fontFamily: 'Outfit' }}>

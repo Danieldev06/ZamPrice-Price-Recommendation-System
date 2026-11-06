@@ -50,6 +50,7 @@ def optimize(db: Session, items, mode, w, conv_cost, budget):
     if not candidates:
         return {"plans": [], "baseline_single_store": None, "saving_vs_baseline": None,
                 "error": "No eligible price data"}
+    
     plans = []
     best_multi = None
     for k in range(1, min(len(candidates), 6) + 1):
@@ -59,6 +60,7 @@ def optimize(db: Session, items, mode, w, conv_cost, budget):
                 best_multi = p
     if best_multi:
         plans.append({**best_multi, "mode": "cheapest"})
+        
     best_single = None
     for bid in candidates:
         p = _plan(items, p_map, {bid}, 0.0, conv_cost)
@@ -66,6 +68,7 @@ def optimize(db: Session, items, mode, w, conv_cost, budget):
             best_single = p
     if best_single:
         plans.append({**best_single, "mode": "single_store"})
+        
     if mode == "convenience" or w > 0:
         best_conv = None
         for k in range(1, min(len(candidates), 4) + 1):
@@ -75,13 +78,24 @@ def optimize(db: Session, items, mode, w, conv_cost, budget):
                     best_conv = p
         if best_conv:
             plans.append({**best_conv, "mode": "convenience"})
+            
     seen, unique = set(), []
     for p in plans:
         key = (p["total"], tuple(p["stores"]))
         if key not in seen:
             seen.add(key); unique.append(p)
+            
     for p in unique:
         p["within_budget"] = (p["total"] <= budget) if budget else None
-    return {"plans": unique, "baseline_single_store": best_single,
-            "saving_vs_baseline": round(best_single["total"] - best_multi["total"], 2)
-                                  if best_single and best_multi else None}
+
+    # --- THE FIX: Add "mode" to baseline_single_store so FastAPI/React doesn't crash ---
+    baseline = None
+    if best_single:
+        baseline = {**best_single, "mode": "single_store"}
+
+    return {
+        "plans": unique, 
+        "baseline_single_store": baseline,
+        "saving_vs_baseline": round(best_single["total"] - best_multi["total"], 2)
+                              if best_single and best_multi else None
+    }

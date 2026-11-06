@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import api from '../api/client';
+import { Search, ShoppingBasket, TrendingDown } from 'lucide-react';
 
 type Page = 'landing' | 'dashboard' | 'search' | 'compare' | 'basket' | 'optimise' | 'history' | 'alerts' | 'deals' | 'supermarkets' | 'profile' | 'admin' | 'budget' | 'location' | 'substitutions';
 
@@ -44,13 +45,11 @@ export default function SearchPage({ onNavigate, onSelectProduct }: Props) {
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [basketItems, setBasketItems] = useState<number[]>([]);
 
-  // 1. Fetch real data
   useEffect(() => {
     async function loadData() {
       try {
         const prodRes = await api.get<Product[]>('/products');
         
-        // Fetch comparisons for all products in parallel
         const detailedProducts = await Promise.all(
           prodRes.data.map(async (p) => {
             const compRes = await api.get(`/products/${p.id}/comparison`);
@@ -93,7 +92,6 @@ export default function SearchPage({ onNavigate, onSelectProduct }: Props) {
   const categories = ['All', ...Array.from(new Set(products.map(p => p.category).filter(Boolean))) as string[]];
   const sortOptions = ['Lowest Price', 'Best Value', 'Biggest Saving'];
 
-  // 2. Filter & Sort
   const filtered = products
     .filter(p => {
       const matchesSearch = p.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -113,16 +111,14 @@ export default function SearchPage({ onNavigate, onSelectProduct }: Props) {
 
   return (
     <div className="max-w-6xl mx-auto px-4 md:px-8 py-8 pb-24 md:pb-8">
-      {/* Header */}
       <div className="mb-6">
         <h1 className="text-2xl font-black text-[#0F2547] mb-1" style={{ fontFamily: 'Outfit' }}>Compare Prices</h1>
         <p className="text-[#64748B] text-sm">Find the best prices across all supermarkets</p>
       </div>
 
-      {/* Search Row */}
       <div className="flex gap-3 mb-5">
         <div className="flex-1 relative">
-          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#94A3B8]">🔍</span>
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[#94A3B8]" size={20} />
           <input
             type="text"
             value={search}
@@ -130,11 +126,9 @@ export default function SearchPage({ onNavigate, onSelectProduct }: Props) {
             placeholder="Search products..."
             className="w-full pl-11 pr-4 py-3 rounded-xl border border-[#E2E8F0] text-sm placeholder-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-[#0F2547]/20 focus:border-[#0F2547] bg-white"
           />
-          {search && <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#94A3B8] hover:text-[#64748B]">✕</button>}
         </div>
       </div>
 
-      {/* Category Pills */}
       <div className="flex gap-2 overflow-x-auto pb-2 mb-5 scrollbar-hide">
         {categories.map(cat => (
           <button key={cat} onClick={() => setSelectedCategory(cat)}
@@ -144,7 +138,6 @@ export default function SearchPage({ onNavigate, onSelectProduct }: Props) {
         ))}
       </div>
 
-      {/* Sort + Results Count */}
       <div className="flex items-center justify-between mb-4">
         <span className="text-sm text-[#64748B]"><span className="font-semibold text-[#1E293B]">{filtered.length}</span> products found</span>
         <div className="flex items-center gap-2">
@@ -160,7 +153,6 @@ export default function SearchPage({ onNavigate, onSelectProduct }: Props) {
         </div>
       </div>
 
-      {/* Product Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {filtered.map(product => {
           const best = product.prices[0];
@@ -168,17 +160,13 @@ export default function SearchPage({ onNavigate, onSelectProduct }: Props) {
 
           return (
             <div key={product.id} className="bg-white rounded-2xl border border-[#E2E8F0] overflow-hidden hover:shadow-md transition-all group">
-              {/* Fallback Image */}
-              <div className="h-44 overflow-hidden relative bg-[#F8FAFC] flex items-center justify-center text-6xl">
-                🛒
+              <div className="h-44 overflow-hidden relative bg-[#F8FAFC] flex items-center justify-center">
+                <ShoppingBasket className="text-[#CBD5E1]" size={64} strokeWidth={1} />
                 {best.promotional_price && (
                   <div className="absolute top-3 left-3 px-2.5 py-1 rounded-lg bg-[#DC2626] text-white text-xs font-bold">
                     Promo
                   </div>
                 )}
-                <div className="absolute top-3 right-3">
-                   <FreshnessTag available={best.available} date={best.observed_at} />
-                </div>
               </div>
 
               <div className="p-4">
@@ -201,12 +189,11 @@ export default function SearchPage({ onNavigate, onSelectProduct }: Props) {
 
                 {product.saving > 0 && (
                   <div className="flex items-center gap-1.5 mb-3 px-3 py-2 rounded-xl bg-[#DCFCE7]">
-                    <span className="text-sm">💰</span>
+                    <TrendingDown className="text-[#16A34A]" size={16} />
                     <span className="text-xs font-semibold text-[#16A34A]">K{product.saving.toFixed(2)} cheaper than {product.worstStore}</span>
                   </div>
                 )}
 
-                {/* Price Mini List */}
                 <div className="space-y-1.5 mb-4">
                   {product.prices.slice(0, 3).map((p, i) => (
                     <div key={p.supermarket} className={`flex items-center justify-between py-1 px-2 rounded-lg text-xs ${i === 0 ? 'bg-[#DCFCE7]' : 'bg-[#F8FAFC]'}`}>
@@ -216,7 +203,6 @@ export default function SearchPage({ onNavigate, onSelectProduct }: Props) {
                   ))}
                 </div>
 
-                {/* Actions */}
                 <div className="flex gap-2">
                   <button onClick={() => { onSelectProduct?.(product.id); onNavigate('compare'); }}
                     className="flex-1 py-2.5 rounded-xl bg-[#0F2547] text-white text-xs font-semibold hover:bg-[#1A3A6B] transition-colors">
@@ -232,17 +218,6 @@ export default function SearchPage({ onNavigate, onSelectProduct }: Props) {
           );
         })}
       </div>
-    </div>
-  );
-}
-
-function FreshnessTag({ available, date }: { available: boolean; date: string }) {
-  const dot = available ? 'bg-[#16A34A]' : 'bg-[#DC2626]';
-  const formattedDate = new Date(date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
-  return (
-    <div className="flex items-center gap-1 px-2 py-1 rounded-lg bg-black/60 backdrop-blur-sm text-white text-xs">
-      <div className={`w-1.5 h-1.5 rounded-full ${dot}`} />
-      {formattedDate}
     </div>
   );
 }

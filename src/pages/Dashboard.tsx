@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import api from '../api/client';
+import { useAuth } from '../context/AuthContext';
 
 type Page = 'landing' | 'dashboard' | 'search' | 'compare' | 'basket' | 'optimise' | 'history' | 'alerts' | 'deals' | 'supermarkets' | 'profile' | 'admin' | 'budget' | 'location' | 'substitutions';
 
@@ -22,9 +23,15 @@ interface Plan {
 }
 
 export default function Dashboard({ onNavigate, onSelectProduct }: Props) {
+  // 1. Get the real user from context
+  const { user } = useAuth(); 
+  
   const [searchVal, setSearchVal] = useState('');
   const [products, setProducts] = useState<Product[]>([]);
   const [aiPlan, setAiPlan] = useState<Plan | null>(null);
+
+  // 2. Extract the first name (fallback to 'Shopper' if not found)
+  const firstName = user?.name ? user.name.split(' ')[0] : 'Shopper';
 
   // Fetch products and run the AI optimizer for the dashboard widget
   useEffect(() => {
@@ -72,7 +79,8 @@ export default function Dashboard({ onNavigate, onSelectProduct }: Props) {
         <div>
           <div className="text-sm text-[#94A3B8] font-medium mb-1">Today · Lusaka, Zambia</div>
           <h1 className="text-3xl md:text-4xl font-black text-[#0F2547] leading-tight" style={{ fontFamily: 'Outfit' }}>
-            Welcome back, <span className="text-[#D97706]">Chanda</span> 👋
+            {/* 3. Use the dynamic firstName variable here */}
+            Welcome back, <span className="text-[#D97706]">{firstName}</span> 👋
           </h1>
           <p className="text-[#64748B] mt-1">What are you shopping for today?</p>
         </div>

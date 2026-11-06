@@ -17,7 +17,10 @@ import ProfilePage from './pages/ProfilePage';
 import BudgetPage from './pages/BudgetPage';
 import LocationPage from './pages/LocationPage';
 import SubstitutionsPage from './pages/SubstitutionsPage';
-import SupermarketsPage from './pages/SupermarketsPage'; // if you have this
+import SupermarketsPage from './pages/SupermarketsPage';
+
+// IMPORT THE NAVBAR HERE
+import NavBar from './components/NavBar'; 
 
 type Page = 'login' | 'landing' | 'dashboard' | 'search' | 'compare' | 'basket' | 'optimise' | 'history' | 'alerts' | 'deals' | 'supermarkets' | 'profile' | 'admin' | 'budget' | 'location' | 'substitutions';
 
@@ -43,7 +46,13 @@ function AppContent() {
 
   // Render the correct page based on state
   return (
-    <>
+    <div className="min-h-screen bg-[#F8FAFC]">
+      {/* RENDER NAVBAR HERE: Only shows if user is logged in. 
+          (The NavBar component itself hides on 'landing' and 'login') */}
+      {user && (
+        <NavBar currentPage={activePage} onNavigate={setActivePage} />
+      )}
+
       {activePage === 'landing' && <LandingPage onNavigate={setActivePage} />}
       {activePage === 'login' && <LoginPage onNavigate={setActivePage} />}
       {activePage === 'dashboard' && <Dashboard onNavigate={setActivePage} onSelectProduct={setSelectedProductId} />}
@@ -60,7 +69,7 @@ function AppContent() {
       {activePage === 'location' && <LocationPage onNavigate={setActivePage} />}
       {activePage === 'substitutions' && <SubstitutionsPage onNavigate={setActivePage} />}
       {activePage === 'supermarkets' && <SupermarketsPage onNavigate={setActivePage} />}
-    </>
+    </div>
   );
 }
 

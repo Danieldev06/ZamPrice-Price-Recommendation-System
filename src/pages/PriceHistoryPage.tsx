@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { TrendingUp, TrendingDown, CheckCircle2, Clock, Activity, Zap, Bell, ArrowDown, ArrowUp, Equal, Target } from 'lucide-react';
 import api from '../api/client';
 
 type Page = 'landing' | 'dashboard' | 'search' | 'compare' | 'basket' | 'optimise' | 'history' | 'alerts' | 'deals' | 'supermarkets' | 'profile' | 'admin' | 'budget' | 'location' | 'substitutions';
@@ -61,7 +62,6 @@ export default function PriceHistoryPage({ onNavigate }: Props) {
       const bMap: Record<number, string> = {};
       if (compRes.data.options) {
         compRes.data.options.forEach((opt: any) => {
-          // Normalize to lowercase for color matching
           bMap[opt.branch_id] = opt.supermarket;
         });
       }
@@ -102,7 +102,6 @@ export default function PriceHistoryPage({ onNavigate }: Props) {
   const stats = useMemo(() => {
     if (!processedData.length) return null;
     
-    // Get all prices from the filtered data
     const allPrices: number[] = [];
     processedData.forEach(d => {
       Object.keys(d).forEach(k => {
@@ -125,7 +124,6 @@ export default function PriceHistoryPage({ onNavigate }: Props) {
     return { current, oldest, lowest, highest, avg, changePct, dropping };
   }, [processedData]);
 
-  // Find all unique supermarket names present in the chart
   const storeKeys = Array.from(new Set(processedData.flatMap(d => Object.keys(d).filter(k => k !== 'date' && k !== 'rawDate'))));
 
   if (loading && !history.length) return <div className="p-12 text-center text-[#64748B]">Loading history data...</div>;
@@ -162,12 +160,14 @@ export default function PriceHistoryPage({ onNavigate }: Props) {
             {[
               { label: 'Current Price', value: `K${stats.current.toFixed(2)}`, sub: 'Latest observation', color: '#0F2547' },
               { label: 'Average', value: `K${stats.avg.toFixed(2)}`, sub: `Over ${period}`, color: '#64748B' },
-              { label: 'Price Change', value: `${stats.dropping ? '▼' : '▲'} ${Math.abs(parseFloat(stats.changePct))}%`, sub: `${stats.dropping ? 'Dropped' : 'Increased'}`, color: stats.dropping ? '#16A34A' : '#DC2626' },
+              { label: 'Price Change', value: `${Math.abs(parseFloat(stats.changePct))}%`, sub: `${stats.dropping ? 'Dropped' : 'Increased'}`, color: stats.dropping ? '#16A34A' : '#DC2626', icon: stats.dropping ? <TrendingDown size={16} /> : <TrendingUp size={16} /> },
               { label: 'Status', value: stats.dropping ? 'Good to buy' : 'Wait for drop', sub: stats.dropping ? 'Below average' : 'Above average', color: stats.dropping ? '#16A34A' : '#D97706' },
             ].map(stat => (
               <div key={stat.label} className="bg-white rounded-2xl border border-[#E2E8F0] p-4">
                 <div className="text-xs text-[#64748B] mb-1 font-medium">{stat.label}</div>
-                <div className="text-xl font-black" style={{ fontFamily: 'Outfit', color: stat.color }}>{stat.value}</div>
+                <div className="text-xl font-black flex items-center gap-1" style={{ fontFamily: 'Outfit', color: stat.color }}>
+                  {stat.icon} {stat.value}
+                </div>
                 <div className="text-xs text-[#94A3B8] mt-0.5">{stat.sub}</div>
               </div>
             ))}
@@ -202,7 +202,6 @@ export default function PriceHistoryPage({ onNavigate }: Props) {
                 />
                 <Legend wrapperStyle={{ fontSize: 12, paddingTop: 12 }} />
                 
-                {/* Dynamically render lines for each supermarket found in the data */}
                 {storeKeys.map((storeName) => {
                   const colorKey = storeName.toLowerCase();
                   return (
@@ -227,14 +226,14 @@ export default function PriceHistoryPage({ onNavigate }: Props) {
               <h3 className="font-bold text-[#0F2547] mb-4" style={{ fontFamily: 'Outfit' }}>{period} Price Range</h3>
               <div className="space-y-3">
                 {[
-                  { label: `Lowest Price (${period})`, value: `K${stats.lowest.toFixed(2)}`, color: '#16A34A', bg: '#DCFCE7', icon: '↓' },
-                  { label: `Highest Price (${period})`, value: `K${stats.highest.toFixed(2)}`, color: '#DC2626', bg: '#FEE2E2', icon: '↑' },
-                  { label: `Average Price (${period})`, value: `K${stats.avg.toFixed(2)}`, color: '#0F2547', bg: '#EFF6FF', icon: '≈' },
-                  { label: 'Current Price', value: `K${stats.current.toFixed(2)}`, color: '#D97706', bg: '#FEF3C7', icon: '•' },
+                  { label: `Lowest Price (${period})`, value: `K${stats.lowest.toFixed(2)}`, color: '#16A34A', bg: '#DCFCE7', icon: <ArrowDown size={16} /> },
+                  { label: `Highest Price (${period})`, value: `K${stats.highest.toFixed(2)}`, color: '#DC2626', bg: '#FEE2E2', icon: <ArrowUp size={16} /> },
+                  { label: `Average Price (${period})`, value: `K${stats.avg.toFixed(2)}`, color: '#0F2547', bg: '#EFF6FF', icon: <Equal size={16} /> },
+                  { label: 'Current Price', value: `K${stats.current.toFixed(2)}`, color: '#D97706', bg: '#FEF3C7', icon: <Target size={16} /> },
                 ].map(r => (
                   <div key={r.label} className="flex items-center justify-between p-3 rounded-xl" style={{ backgroundColor: r.bg }}>
                     <div className="flex items-center gap-2.5">
-                      <span className="font-bold w-5 text-center" style={{ color: r.color }}>{r.icon}</span>
+                      <span className="font-bold flex items-center justify-center w-5" style={{ color: r.color }}>{r.icon}</span>
                       <span className="text-sm text-[#475569]">{r.label}</span>
                     </div>
                     <span className="font-bold" style={{ fontFamily: 'Outfit', color: r.color }}>{r.value}</span>
@@ -247,8 +246,8 @@ export default function PriceHistoryPage({ onNavigate }: Props) {
             <div className="bg-white rounded-2xl border border-[#E2E8F0] p-5">
               <h3 className="font-bold text-[#0F2547] mb-4" style={{ fontFamily: 'Outfit' }}>AI Price Intelligence</h3>
               <div className={`p-4 rounded-xl mb-4 ${stats.dropping ? 'bg-[#DCFCE7]' : 'bg-[#FEF3C7]'}`}>
-                <div className={`font-bold text-lg mb-1 ${stats.dropping ? 'text-[#16A34A]' : 'text-[#D97706]'}`} style={{ fontFamily: 'Outfit' }}>
-                  {stats.dropping ? '🟢 Good time to buy!' : '🟡 Consider waiting'}
+                <div className={`font-bold text-lg mb-1 flex items-center gap-2 ${stats.dropping ? 'text-[#16A34A]' : 'text-[#D97706]'}`} style={{ fontFamily: 'Outfit' }}>
+                  {stats.dropping ? <><CheckCircle2 size={20} /> Good time to buy!</> : <><Clock size={20} /> Consider waiting</>}
                 </div>
                 <div className={`text-sm ${stats.dropping ? 'text-[#16A34A]/80' : 'text-[#D97706]/80'}`}>
                   {stats.dropping
@@ -260,17 +259,21 @@ export default function PriceHistoryPage({ onNavigate }: Props) {
 
               <div className="space-y-3">
                 <div className="flex items-center gap-3 text-sm">
-                  <span className="w-6 h-6 rounded-full bg-[#EFF6FF] flex items-center justify-center text-xs">📈</span>
+                  <span className="w-6 h-6 rounded-full bg-[#EFF6FF] flex items-center justify-center text-xs">
+                    <Activity size={14} className="text-[#0F2547]" />
+                  </span>
                   <span className="text-[#475569]">Data points: <span className="font-medium text-[#1E293B]">{history.length} observations</span></span>
                 </div>
                 <div className="flex items-center gap-3 text-sm">
-                  <span className="w-6 h-6 rounded-full bg-[#FEF3C7] flex items-center justify-center text-xs">⚡</span>
+                  <span className="w-6 h-6 rounded-full bg-[#FEF3C7] flex items-center justify-center text-xs">
+                    <Zap size={14} className="text-[#D97706]" />
+                  </span>
                   <span className="text-[#475569]">Price volatility: <span className="font-medium text-[#1E293B]">{stats.highest - stats.lowest > (stats.avg * 0.1) ? 'High' : 'Low — stable product'}</span></span>
                 </div>
               </div>
 
-              <button onClick={() => onNavigate('alerts')} className="mt-4 w-full py-3 rounded-xl bg-[#0F2547] text-white text-sm font-semibold hover:bg-[#1A3A6B] transition-colors">
-                🔔 Set Price Alert
+              <button onClick={() => onNavigate('alerts')} className="mt-4 w-full py-3 rounded-xl bg-[#0F2547] text-white text-sm font-semibold hover:bg-[#1A3A6B] transition-colors flex items-center justify-center gap-2">
+                <Bell size={16} /> Set Price Alert
               </button>
             </div>
           </div>

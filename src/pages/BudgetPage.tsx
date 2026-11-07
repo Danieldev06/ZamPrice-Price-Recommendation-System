@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import api from '../api/client';
+import { CheckCircle2, AlertCircle, Lightbulb, Check, PartyPopper, ArrowLeft, ArrowRight } from 'lucide-react';
 
 type Page = 'landing' | 'dashboard' | 'search' | 'compare' | 'basket' | 'optimise' | 'history' | 'alerts' | 'deals' | 'supermarkets' | 'profile' | 'admin' | 'budget' | 'location' | 'substitutions';
 
@@ -108,7 +109,9 @@ export default function BudgetPage({ onNavigate }: Props) {
           <h1 className="text-2xl font-black text-[#0F2547]" style={{ fontFamily: 'Outfit' }}>Smart Budget</h1>
           <p className="text-sm text-[#64748B]">Optimise your basket to fit your budget</p>
         </div>
-        <button onClick={() => onNavigate('basket')} className="text-sm text-[#64748B] hover:text-[#0F2547] transition-colors">← Back to Basket</button>
+        <button onClick={() => onNavigate('basket')} className="text-sm text-[#64748B] hover:text-[#0F2547] transition-colors flex items-center gap-1">
+          <ArrowLeft size={16} /> Back to Basket
+        </button>
       </div>
 
       {/* Budget Input */}
@@ -144,8 +147,8 @@ export default function BudgetPage({ onNavigate }: Props) {
       <div className={`rounded-2xl p-6 mb-6 ${withinBudget ? 'bg-[#F0FDF4] border border-[#BBF7D0]' : 'bg-[#FEF2F2] border border-[#FECACA]'}`}>
         <div className="flex items-center justify-between flex-wrap gap-4">
           <div>
-            <div className={`text-sm font-medium mb-1 ${withinBudget ? 'text-[#16A34A]' : 'text-[#DC2626]'}`}>
-              {withinBudget ? '🟢 Within budget!' : '🔴 Over budget'}
+            <div className={`text-sm font-medium mb-1 flex items-center gap-1.5 ${withinBudget ? 'text-[#16A34A]' : 'text-[#DC2626]'}`}>
+              {withinBudget ? <><CheckCircle2 size={16}/> Within budget!</> : <><AlertCircle size={16}/> Over budget</>}
             </div>
             <div className="flex items-center gap-6">
               <div>
@@ -209,8 +212,8 @@ export default function BudgetPage({ onNavigate }: Props) {
                 return (
                   <div key={idx} className={`bg-white rounded-2xl border-2 p-5 transition-all ${applied ? 'border-[#16A34A]/40 bg-[#F0FDF4]' : 'border-[#E2E8F0]'}`}>
                     <div className="flex items-start gap-4">
-                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg flex-shrink-0 ${applied ? 'bg-[#DCFCE7]' : 'bg-[#F8FAFC]'}`}>
-                        {applied ? '✅' : '💡'}
+                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${applied ? 'bg-[#DCFCE7]' : 'bg-[#F8FAFC]'}`}>
+                        {applied ? <CheckCircle2 size={20} className="text-[#16A34A]" /> : <Lightbulb size={20} className="text-[#D97706]" />}
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="text-xs text-[#94A3B8] font-medium mb-1">{s.category}</div>
@@ -226,8 +229,8 @@ export default function BudgetPage({ onNavigate }: Props) {
                         </div>
                       </div>
                       <button onClick={() => toggleSuggestion(idx)}
-                        className={`px-4 py-2 rounded-xl text-xs font-bold transition-colors flex-shrink-0 ${applied ? 'bg-[#16A34A] text-white' : 'bg-[#0F2547] text-white hover:bg-[#1A3A6B]'}`}>
-                        {applied ? '✓ Applied' : 'Apply'}
+                        className={`px-4 py-2 rounded-xl text-xs font-bold transition-colors flex-shrink-0 flex items-center gap-1.5 ${applied ? 'bg-[#16A34A] text-white' : 'bg-[#0F2547] text-white hover:bg-[#1A3A6B]'}`}>
+                        {applied ? <><Check size={14} /> Applied</> : 'Apply'}
                       </button>
                     </div>
                   </div>
@@ -240,7 +243,7 @@ export default function BudgetPage({ onNavigate }: Props) {
 
       {withinBudget && (
         <div className="bg-[#DCFCE7] rounded-2xl p-6 text-center mb-6">
-          <div className="text-5xl mb-3">🎉</div>
+          <PartyPopper size={48} className="text-[#16A34A] mx-auto mb-3" />
           <h3 className="text-xl font-black text-[#16A34A] mb-2" style={{ fontFamily: 'Outfit' }}>
             Within Your K{budget.toFixed(2)} Budget!
           </h3>
@@ -252,11 +255,11 @@ export default function BudgetPage({ onNavigate }: Props) {
       )}
 
       <div className="flex gap-3">
-        <button onClick={() => onNavigate('basket')} className="flex-1 py-3.5 rounded-xl border border-[#E2E8F0] text-sm font-semibold text-[#475569] hover:bg-[#F8FAFC] transition-colors">
-          ← Back to Basket
+        <button onClick={() => onNavigate('basket')} className="flex-1 py-3.5 rounded-xl border border-[#E2E8F0] text-sm font-semibold text-[#475569] hover:bg-[#F8FAFC] transition-colors flex items-center justify-center gap-2">
+          <ArrowLeft size={18} /> Back to Basket
         </button>
-        <button onClick={() => onNavigate('optimise')} className="flex-1 py-3.5 rounded-xl bg-[#0F2547] text-white font-bold text-sm hover:bg-[#1A3A6B] transition-colors">
-          Full Optimisation →
+        <button onClick={() => onNavigate('optimise')} className="flex-1 py-3.5 rounded-xl bg-[#0F2547] text-white font-bold text-sm hover:bg-[#1A3A6B] transition-colors flex items-center justify-center gap-2">
+          Full Optimisation <ArrowRight size={18} />
         </button>
       </div>
     </div>

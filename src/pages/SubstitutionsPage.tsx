@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import api from '../api/client';
+import { Search, ShoppingBasket, TrendingDown, Award, ArrowRight, RefreshCw, Info, Check } from 'lucide-react';
 
 type Page = 'landing' | 'dashboard' | 'search' | 'compare' | 'basket' | 'optimise' | 'history' | 'alerts' | 'deals' | 'supermarkets' | 'profile' | 'admin' | 'budget' | 'location' | 'substitutions';
 
@@ -127,7 +128,7 @@ export default function SubstitutionsPage({ onNavigate }: Props) {
       {/* Header */}
       <div className="mb-7">
         <div className="flex items-center gap-2 mb-2">
-          <span className="text-2xl">🔄</span>
+          <RefreshCw size={24} className="text-[#0F2547]" />
           <h1 className="text-2xl font-black text-[#0F2547]" style={{ fontFamily: 'Outfit' }}>
             Find Cheaper Alternatives
           </h1>
@@ -140,7 +141,7 @@ export default function SubstitutionsPage({ onNavigate }: Props) {
       {/* Search */}
       <div className="flex gap-3 mb-6">
         <div className="flex-1 relative">
-          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#94A3B8]">🔍</span>
+          <Search size={20} className="absolute left-4 top-1/2 -translate-y-1/2 text-[#94A3B8]" />
           <input
             value={search}
             onChange={e => setSearch(e.target.value)}
@@ -171,8 +172,8 @@ export default function SubstitutionsPage({ onNavigate }: Props) {
                   onClick={() => setSelectedProductId(p.id)}
                   className={`w-full text-left p-3.5 rounded-xl border-2 transition-all flex items-center gap-3 ${selectedProductId === p.id ? 'border-[#0F2547] bg-[#EFF6FF]' : 'border-[#E2E8F0] bg-white hover:border-[#0F2547]/30'}`}
                 >
-                  <div className="w-10 h-10 rounded-lg bg-[#F1F5F9] flex-shrink-0 flex items-center justify-center text-xl">
-                    🛒
+                  <div className="w-10 h-10 rounded-lg bg-[#F1F5F9] flex-shrink-0 flex items-center justify-center">
+                    <ShoppingBasket size={20} className="text-[#94A3B8]" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className={`text-xs font-semibold truncate ${selectedProductId === p.id ? 'text-[#0F2547]' : 'text-[#1E293B]'}`}>{p.name}</div>
@@ -196,8 +197,8 @@ export default function SubstitutionsPage({ onNavigate }: Props) {
               {/* Current Product Card */}
               <div className="bg-white rounded-2xl border border-[#E2E8F0] p-5 mb-5">
                 <div className="flex items-start gap-4">
-                  <div className="w-20 h-20 rounded-2xl bg-[#F1F5F9] flex-shrink-0 flex items-center justify-center text-4xl">
-                    🛒
+                  <div className="w-20 h-20 rounded-2xl bg-[#F1F5F9] flex-shrink-0 flex items-center justify-center">
+                    <ShoppingBasket size={48} className="text-[#CBD5E1]" />
                   </div>
                   <div className="flex-1">
                     <div className="text-xs text-[#94A3B8] font-medium uppercase tracking-wide mb-0.5">{selectedProduct.category}</div>
@@ -225,8 +226,8 @@ export default function SubstitutionsPage({ onNavigate }: Props) {
                 <h3 className="font-bold text-[#0F2547]" style={{ fontFamily: 'Outfit' }}>
                   {loadingAlternatives ? 'Searching...' : `${selectedProduct.substitutes.length} Alternative${selectedProduct.substitutes.length !== 1 ? 's' : ''} Found`}
                 </h3>
-                <div className="text-xs text-[#94A3B8] bg-[#F8FAFC] px-3 py-1.5 rounded-lg border border-[#E2E8F0]">
-                  ℹ Matched strictly by category
+                <div className="text-xs text-[#94A3B8] bg-[#F8FAFC] px-3 py-1.5 rounded-lg border border-[#E2E8F0] flex items-center gap-1.5">
+                  <Info size={14} /> Matched strictly by category
                 </div>
               </div>
 
@@ -234,7 +235,7 @@ export default function SubstitutionsPage({ onNavigate }: Props) {
                 <div className="py-8 text-center text-[#94A3B8]">Finding cheaper options...</div>
               ) : selectedProduct.substitutes.length === 0 ? (
                 <div className="py-12 text-center bg-white rounded-2xl border border-[#E2E8F0]">
-                  <div className="text-4xl mb-3">🔍</div>
+                  <Search size={48} className="text-[#CBD5E1] mx-auto mb-3" />
                   <div className="text-[#1E293B] font-semibold mb-1">No cheaper alternatives found</div>
                   <div className="text-sm text-[#64748B]">This product is already the most cost-effective option in its category.</div>
                 </div>
@@ -251,14 +252,14 @@ export default function SubstitutionsPage({ onNavigate }: Props) {
                       >
                         {isBestSaving && (
                           <div className="flex items-center gap-1.5 text-xs font-bold text-[#16A34A] mb-3">
-                            <span className="w-4 h-4 rounded-full bg-[#16A34A] text-white flex items-center justify-center text-[9px]">★</span>
+                            <Award size={16} />
                             Best Alternative
                           </div>
                         )}
 
                         <div className="flex items-start gap-4 flex-wrap md:flex-nowrap">
-                          <div className="w-16 h-16 rounded-xl bg-[#F1F5F9] flex-shrink-0 flex items-center justify-center text-2xl">
-                            🛒
+                          <div className="w-16 h-16 rounded-xl bg-[#F1F5F9] flex-shrink-0 flex items-center justify-center">
+                            <ShoppingBasket size={32} className="text-[#CBD5E1]" />
                           </div>
 
                           <div className="flex-1 min-w-0">
@@ -283,22 +284,24 @@ export default function SubstitutionsPage({ onNavigate }: Props) {
                                 <span className="text-sm text-[#64748B]">/{sub.canonical_unit}</span>
                               </div>
                               {sub.saving_per_unit > 0 && (
-                                <div className="text-sm font-bold text-[#16A34A]">−K{sub.saving_per_unit.toFixed(2)}/{sub.canonical_unit}</div>
+                                <div className="text-sm font-bold text-[#16A34A] flex items-center justify-end gap-1">
+                                  <TrendingDown size={14} /> K{sub.saving_per_unit.toFixed(2)}/{sub.canonical_unit}
+                                </div>
                               )}
                             </div>
 
                             <div className="flex flex-col gap-2 w-full">
                               <button
                                 onClick={() => handleAdd(sub.product_id)}
-                                className={`w-full py-2 rounded-xl text-xs font-bold transition-colors ${added ? 'bg-[#16A34A] text-white' : 'bg-[#0F2547] text-white hover:bg-[#1A3A6B]'}`}
+                                className={`w-full py-2 rounded-xl text-xs font-bold transition-colors flex items-center justify-center gap-1.5 ${added ? 'bg-[#16A34A] text-white' : 'bg-[#0F2547] text-white hover:bg-[#1A3A6B]'}`}
                               >
-                                {added ? '✓ Added!' : '+ Add to Basket'}
+                                {added ? <><Check size={14} /> Added!</> : '+ Add to Basket'}
                               </button>
                               <button
                                 onClick={() => onNavigate('compare')}
-                                className="w-full py-2 rounded-xl text-xs font-semibold text-[#475569] border border-[#E2E8F0] hover:bg-[#F8FAFC] transition-colors"
+                                className="w-full py-2 rounded-xl text-xs font-semibold text-[#475569] border border-[#E2E8F0] hover:bg-[#F8FAFC] transition-colors flex items-center justify-center gap-1"
                               >
-                                Compare →
+                                Compare <ArrowRight size={14} />
                               </button>
                             </div>
                           </div>
@@ -311,7 +314,7 @@ export default function SubstitutionsPage({ onNavigate }: Props) {
 
               {/* Disclaimer */}
               <div className="mt-6 p-4 bg-[#F8FAFC] rounded-xl border border-[#E2E8F0] flex items-start gap-3">
-                <span className="text-lg mt-0.5 flex-shrink-0">ℹ️</span>
+                <Info size={18} className="text-[#94A3B8] flex-shrink-0 mt-0.5" />
                 <p className="text-xs text-[#64748B] leading-relaxed">
                   Alternatives are matched by product category and type. ZamPrice does not claim cheaper alternatives are superior in quality. Always check product labels before purchasing.
                 </p>

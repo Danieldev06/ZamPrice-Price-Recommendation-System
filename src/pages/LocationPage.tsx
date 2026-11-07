@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import api from '../api/client';
+import { MapPin, Building2, Map, Car, Clock, ArrowRight } from 'lucide-react';
 
 type Page = 'landing' | 'dashboard' | 'search' | 'compare' | 'basket' | 'optimise' | 'history' | 'alerts' | 'deals' | 'supermarkets' | 'profile' | 'admin' | 'budget' | 'location' | 'substitutions';
 
@@ -105,20 +106,20 @@ export default function LocationPage({ onNavigate }: Props) {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
           <button onClick={() => setLocMode('gps')}
             className="p-6 rounded-2xl border-2 border-[#E2E8F0] bg-white hover:border-[#0F2547] transition-all group text-left">
-            <div className="text-3xl mb-3">📍</div>
+            <div className="mb-3"><MapPin size={32} className="text-[#0F2547]" /></div>
             <div className="font-bold text-[#1E293B] mb-1" style={{ fontFamily: 'Outfit' }}>Use My Location</div>
             <div className="text-sm text-[#64748B]">Find stores closest to where you are now</div>
           </button>
           <button onClick={() => setLocMode('city')}
             className="p-6 rounded-2xl border-2 border-[#E2E8F0] bg-white hover:border-[#0F2547] transition-all group text-left">
-            <div className="text-3xl mb-3">🏙️</div>
+            <div className="mb-3"><Building2 size={32} className="text-[#0F2547]" /></div>
             <div className="font-bold text-[#1E293B] mb-1" style={{ fontFamily: 'Outfit' }}>Select City & Area</div>
             <div className="text-sm text-[#64748B]">Choose your city or neighbourhood</div>
           </button>
         </div>
       ) : (
         <div className="bg-[#EFF6FF] border border-[#BFDBFE] rounded-2xl p-4 mb-6 flex items-center gap-3">
-          <span className="text-2xl">📍</span>
+          <MapPin size={24} className="text-[#0F2547]" />
           <div className="flex-1">
             <div className="font-semibold text-[#0F2547]">
               {locMode === 'gps' ? 'Using your current location' : `Lusaka, Zambia`}
@@ -150,7 +151,7 @@ export default function LocationPage({ onNavigate }: Props) {
             />
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="text-center">
-                <div className="text-4xl mb-2">🗺️</div>
+                <Map size={48} className="text-[#0F2547] mx-auto mb-2 opacity-50" />
                 <div className="font-semibold text-[#0F2547]">Interactive Map</div>
                 <div className="text-sm text-[#64748B]">Showing {filteredLocations.length} stores</div>
               </div>
@@ -178,9 +179,9 @@ export default function LocationPage({ onNavigate }: Props) {
                         <div>
                           <div className="font-bold text-[#1E293B]" style={{ fontFamily: 'Outfit' }}>{loc.storeName} {loc.branchName}</div>
                           <div className="flex items-center gap-3 mt-1 text-xs text-[#64748B]">
-                            <span>📍 {loc.distance} km away</span>
-                            <span>🚗 {loc.travelTime} drive</span>
-                            <span>🕒 {loc.hours}</span>
+                            <span className="flex items-center gap-1"><MapPin size={14} /> {loc.distance} km away</span>
+                            <span className="flex items-center gap-1"><Car size={14} /> {loc.travelTime} drive</span>
+                            <span className="flex items-center gap-1"><Clock size={14} /> {loc.hours}</span>
                           </div>
                         </div>
                         <div className="text-right flex-shrink-0">
@@ -203,8 +204,8 @@ export default function LocationPage({ onNavigate }: Props) {
                           </div>
                         </div>
                         <button onClick={() => onNavigate('optimise')}
-                          className="px-4 py-2 rounded-xl bg-[#0F2547] text-white text-xs font-bold hover:bg-[#1A3A6B] transition-colors flex-shrink-0">
-                          View Store →
+                          className="px-4 py-2 rounded-xl bg-[#0F2547] text-white text-xs font-bold hover:bg-[#1A3A6B] transition-colors flex-shrink-0 flex items-center gap-1">
+                          View Store <ArrowRight size={14} />
                         </button>
                       </div>
                     </div>

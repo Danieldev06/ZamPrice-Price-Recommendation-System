@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import api from '../api/client';
+import { Bell, Target, RefreshCw, Trash2, Lightbulb, CheckCircle2, Clock, Check } from 'lucide-react';
 
 type Page = 'landing' | 'dashboard' | 'search' | 'compare' | 'basket' | 'optimise' | 'history' | 'alerts' | 'deals' | 'supermarkets' | 'profile' | 'admin' | 'budget' | 'location' | 'substitutions';
 
@@ -124,7 +125,8 @@ export default function AlertsPage({ onNavigate }: Props) {
         <div className="flex gap-2">
           <button onClick={handleEvaluate} disabled={evaluating}
             className="px-4 py-2.5 rounded-xl border border-[#E2E8F0] text-[#475569] text-sm font-semibold hover:bg-[#F8FAFC] transition-colors flex items-center gap-2">
-            {evaluating ? 'Checking...' : '🔄 Refresh Prices'}
+            {evaluating ? <RefreshCw size={16} className="animate-spin" /> : <RefreshCw size={16} />} 
+            {evaluating ? 'Checking...' : 'Refresh Prices'}
           </button>
           <button onClick={() => setShowCreate(true)}
             className="px-4 py-2.5 rounded-xl bg-[#0F2547] text-white text-sm font-semibold hover:bg-[#1A3A6B] transition-colors">
@@ -159,8 +161,8 @@ export default function AlertsPage({ onNavigate }: Props) {
           return (
             <div key={alert.id} className={`bg-white rounded-2xl border-2 p-5 transition-all ${reached ? 'border-[#16A34A]/30' : 'border-[#E2E8F0]'}`}>
               <div className="flex items-start gap-4">
-                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-2xl flex-shrink-0 ${reached ? 'bg-[#DCFCE7]' : 'bg-[#FEF3C7]'}`}>
-                  {reached ? '🎯' : '⏳'}
+                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0 ${reached ? 'bg-[#DCFCE7]' : 'bg-[#FEF3C7]'}`}>
+                  {reached ? <Target size={24} className="text-[#16A34A]" /> : <Clock size={24} className="text-[#D97706]" />}
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-start justify-between gap-2">
@@ -169,10 +171,12 @@ export default function AlertsPage({ onNavigate }: Props) {
                       <div className="text-xs text-[#64748B] mt-0.5">Checking all supermarkets</div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <div className={`px-2.5 py-1 rounded-lg text-xs font-bold ${reached ? 'bg-[#DCFCE7] text-[#16A34A]' : 'bg-[#FEF3C7] text-[#D97706]'}`}>
-                        {reached ? '🟢 Target reached' : '🟡 Waiting'}
+                      <div className={`px-2.5 py-1 rounded-lg text-xs font-bold flex items-center gap-1.5 ${reached ? 'bg-[#DCFCE7] text-[#16A34A]' : 'bg-[#FEF3C7] text-[#D97706]'}`}>
+                        {reached ? <><CheckCircle2 size={12} /> Target reached</> : <><Clock size={12} /> Waiting</>}
                       </div>
-                      <button onClick={() => handleDelete(alert.id)} className="text-[#94A3B8] hover:text-[#DC2626] transition-colors text-lg">×</button>
+                      <button onClick={() => handleDelete(alert.id)} className="text-[#94A3B8] hover:text-[#DC2626] transition-colors">
+                        <Trash2 size={18} />
+                      </button>
                     </div>
                   </div>
 
@@ -199,11 +203,12 @@ export default function AlertsPage({ onNavigate }: Props) {
                         style={{ width: `${progress}%`, backgroundColor: reached ? '#16A34A' : '#D97706' }}
                       />
                     </div>
-                    <div className="text-xs mt-1 text-[#64748B]">
-                      {reached
-                        ? `✓ Price dropped K${(alert.currentPrice - alert.target_price).toFixed(2)} below your target!`
-                        : `K${(alert.currentPrice - alert.target_price).toFixed(2)} away from your target price`
-                      }
+                    <div className="text-xs mt-1 text-[#64748B] flex items-center gap-1">
+                      {reached ? (
+                        <><Check size={14} className="text-[#16A34A]" /> Price dropped K${(alert.currentPrice - alert.target_price).toFixed(2)} below your target!</>
+                      ) : (
+                        `K${(alert.currentPrice - alert.target_price).toFixed(2)} away from your target price`
+                      )}
                     </div>
                   </div>
                 </div>
@@ -214,7 +219,7 @@ export default function AlertsPage({ onNavigate }: Props) {
 
         {alerts.length === 0 && (
           <div className="text-center py-16 bg-white rounded-2xl border border-[#E2E8F0]">
-            <div className="text-5xl mb-4">🔔</div>
+            <Bell size={64} className="text-[#CBD5E1] mx-auto mb-4" />
             <h3 className="text-lg font-bold text-[#1E293B] mb-2" style={{ fontFamily: 'Outfit' }}>No price alerts yet</h3>
             <p className="text-sm text-[#64748B] mb-4">Create alerts to be notified when prices drop</p>
             <button onClick={() => setShowCreate(true)} className="px-6 py-3 rounded-xl bg-[#0F2547] text-white text-sm font-semibold">Create Your First Alert</button>
@@ -228,7 +233,9 @@ export default function AlertsPage({ onNavigate }: Props) {
           <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl">
             <div className="flex items-center justify-between px-6 py-4 border-b border-[#E2E8F0]">
               <h3 className="font-bold text-[#0F2547]" style={{ fontFamily: 'Outfit' }}>Create Price Alert</h3>
-              <button onClick={() => setShowCreate(false)} className="text-[#94A3B8] hover:text-[#64748B] text-xl">×</button>
+              <button onClick={() => setShowCreate(false)} className="text-[#94A3B8] hover:text-[#64748B] transition-colors">
+                <Trash2 size={20} className="rotate-45" /> {/* Using Trash2 rotated as a close icon, or you can use X */}
+              </button>
             </div>
             <div className="p-6 space-y-4">
               <div>
@@ -251,8 +258,9 @@ export default function AlertsPage({ onNavigate }: Props) {
                   className="w-full px-4 py-3 rounded-xl border border-[#E2E8F0] text-sm focus:outline-none focus:ring-2 focus:ring-[#0F2547]/20"
                 />
               </div>
-              <div className="p-3 bg-[#F8FAFC] rounded-xl text-xs text-[#64748B]">
-                💡 The system will automatically check all supermarkets and notify you when the best price drops below your target.
+              <div className="p-3 bg-[#F8FAFC] rounded-xl text-xs text-[#64748B] flex items-start gap-2">
+                <Lightbulb size={16} className="text-[#D97706] flex-shrink-0 mt-0.5" />
+                <span>The system will automatically check all supermarkets and notify you when the best price drops below your target.</span>
               </div>
             </div>
             <div className="px-6 pb-6 flex gap-3">

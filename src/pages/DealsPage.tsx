@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import api from '../api/client';
+import { Flame, Search, ShoppingBasket, TrendingDown } from 'lucide-react';
 
 type Page = 'landing' | 'dashboard' | 'search' | 'compare' | 'basket' | 'optimise' | 'history' | 'alerts' | 'deals' | 'supermarkets' | 'profile' | 'admin' | 'budget' | 'location' | 'substitutions';
 
@@ -84,8 +85,8 @@ export default function DealsPage({ onNavigate }: Props) {
     <div className="max-w-5xl mx-auto px-4 md:px-8 py-8 pb-24 md:pb-8">
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-2xl font-black text-[#0F2547]" style={{ fontFamily: 'Outfit' }}>
-          Today's Best Deals 🔥
+        <h1 className="text-2xl font-black text-[#0F2547] flex items-center gap-2" style={{ fontFamily: 'Outfit' }}>
+          Today's Best Deals <Flame className="text-[#DC2626]" size={24} />
         </h1>
         <p className="text-sm text-[#64748B]">Live promotions and price drops across all supermarkets</p>
       </div>
@@ -142,7 +143,7 @@ export default function DealsPage({ onNavigate }: Props) {
       {/* Deals Grid */}
       {filtered.length === 0 ? (
         <div className="text-center py-20 bg-white rounded-2xl border border-[#E2E8F0] mb-8">
-          <div className="text-5xl mb-4">🔍</div>
+          <Search size={64} className="text-[#CBD5E1] mx-auto mb-4" />
           <h3 className="text-xl font-bold text-[#1E293B] mb-2" style={{ fontFamily: 'Outfit' }}>No deals found</h3>
           <p className="text-[#64748B] text-sm">Try changing your category filter.</p>
         </div>
@@ -150,8 +151,8 @@ export default function DealsPage({ onNavigate }: Props) {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
           {filtered.map(deal => (
             <div key={deal.id} className="bg-white rounded-2xl border border-[#E2E8F0] overflow-hidden hover:shadow-md transition-all group cursor-pointer">
-              <div className="h-44 overflow-hidden relative bg-[#F1F5F9] flex items-center justify-center text-6xl">
-                🛒
+              <div className="h-44 overflow-hidden relative bg-[#F1F5F9] flex items-center justify-center">
+                <ShoppingBasket size={64} className="text-[#CBD5E1]" />
                 <div className="absolute top-3 left-3 px-2.5 py-1 rounded-lg bg-[#DC2626] text-white text-sm font-black">
                   {deal.discount}% OFF
                 </div>
@@ -167,7 +168,8 @@ export default function DealsPage({ onNavigate }: Props) {
                 </div>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-[#DCFCE7]">
-                    <span className="text-xs font-bold text-[#16A34A]">💰 Save K{(deal.was - deal.now).toFixed(2)}</span>
+                    <TrendingDown size={16} className="text-[#16A34A]" />
+                    <span className="text-xs font-bold text-[#16A34A]">Save K{(deal.was - deal.now).toFixed(2)}</span>
                   </div>
                   <button onClick={() => onNavigate('compare')} className="px-4 py-2 rounded-xl bg-[#0F2547] text-white text-xs font-bold hover:bg-[#1A3A6B] transition-colors">
                     View Deal

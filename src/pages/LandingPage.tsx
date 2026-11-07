@@ -1,5 +1,11 @@
 import { useState, useEffect } from 'react';
 import api from '../api/client';
+import { 
+  Search, Scale, ShoppingBasket, Bot, Wallet, Rocket, 
+  Store, Package, Radio, Brain, BarChart, TrendingUp, 
+  RefreshCw, Lightbulb, Star, MapPin, Wheat, Droplet, 
+  Candy, Soup, Milk, Sandwich, Egg, ArrowRight 
+} from 'lucide-react';
 
 type Page = 'landing' | 'dashboard' | 'search' | 'compare' | 'basket' | 'optimise' | 'history' | 'alerts' | 'deals' | 'supermarkets' | 'profile' | 'admin' | 'budget' | 'location' | 'substitutions';
 
@@ -7,24 +13,26 @@ interface Props {
   onNavigate: (page: Page) => void;
 }
 
-// Fallback icons for known categories
-const CATEGORY_ICONS: Record<string, string> = {
-  'Mealie Meal': '🌾',
-  'Cooking Oil': '🛢️',
-  'Sugar': '🍬',
-  'Rice': '🍚',
-  'Milk': '🥛',
-  'Bread': '🍞',
-  'Eggs': '🥚',
-  'General': '🛒'
+// Helper to map categories to Lucide icons
+const getCategoryIcon = (category: string) => {
+  const map: Record<string, React.ReactNode> = {
+    'Mealie Meal': <Wheat size={28} className="text-[#D97706]" />,
+    'Cooking Oil': <Droplet size={28} className="text-[#D97706]" />,
+    'Sugar': <Candy size={28} className="text-[#D97706]" />,
+    'Rice': <Soup size={28} className="text-[#D97706]" />,
+    'Milk': <Milk size={28} className="text-[#D97706]" />,
+    'Bread': <Sandwich size={28} className="text-[#D97706]" />,
+    'Eggs': <Egg size={28} className="text-[#D97706]" />,
+  };
+  return map[category] || <ShoppingBasket size={28} className="text-[#D97706]" />;
 };
 
 const HOW_STEPS = [
-  { n: '01', icon: '🔍', title: 'Search Products', desc: 'Type any product and see it across all stores instantly' },
-  { n: '02', icon: '⚖️', title: 'Compare Prices', desc: 'Side-by-side prices, unit costs, and stock status' },
-  { n: '03', icon: '🛒', title: 'Build Your Basket', desc: 'Add items from any store into one smart basket' },
-  { n: '04', icon: '🤖', title: 'Get Your Plan', desc: 'AI calculates the cheapest and most convenient route' },
-  { n: '05', icon: '💰', title: 'Save Money', desc: 'Shop smarter and keep more kwacha in your pocket' },
+  { n: '01', icon: <Search size={24} className="text-white" />, title: 'Search Products', desc: 'Type any product and see it across all stores instantly' },
+  { n: '02', icon: <Scale size={24} className="text-white" />, title: 'Compare Prices', desc: 'Side-by-side prices, unit costs, and stock status' },
+  { n: '03', icon: <ShoppingBasket size={24} className="text-white" />, title: 'Build Your Basket', desc: 'Add items from any store into one smart basket' },
+  { n: '04', icon: <Bot size={24} className="text-white" />, title: 'Get Your Plan', desc: 'AI calculates the cheapest and most convenient route' },
+  { n: '05', icon: <Wallet size={24} className="text-white" />, title: 'Save Money', desc: 'Shop smarter and keep more kwacha in your pocket' },
 ];
 
 const STORE_BRANDS = [
@@ -41,7 +49,7 @@ const TESTIMONIALS = [
 
 export default function LandingPage({ onNavigate }: Props) {
   const [search, setSearch] = useState('');
-  const [dynamicCategories, setDynamicCategories] = useState<{id: string, name: string, icon: string}[]>([]);
+  const [dynamicCategories, setDynamicCategories] = useState<{id: string, name: string}[]>([]);
   const [productCount, setProductCount] = useState('1,000+');
 
   // Fetch real data for the marketing page
@@ -59,8 +67,7 @@ export default function LandingPage({ onNavigate }: Props) {
         const cats = Array.from(new Set(res.data.map((p: any) => p.category).filter(Boolean)));
         const mappedCats = cats.map((c: any) => ({
           id: c.toLowerCase().replace(' ', '-'),
-          name: c,
-          icon: CATEGORY_ICONS[c] || '🛒'
+          name: c
         }));
         
         setDynamicCategories(mappedCats);
@@ -92,7 +99,7 @@ export default function LandingPage({ onNavigate }: Props) {
           <a href="#stores" className="text-sm text-[#64748B] hover:text-[#0F2547] transition-colors font-medium">Supermarkets</a>
           <a href="#why" className="text-sm text-[#64748B] hover:text-[#0F2547] transition-colors font-medium">Why ZamPrice</a>
           <button
-            onClick={() => onNavigate('dashboard')}
+            onClick={() => onNavigate('login')}
             className="px-5 py-2.5 rounded-xl bg-[#0F2547] text-white text-sm font-bold hover:bg-[#1A3A6B] transition-colors shadow-sm"
           >
             Sign In
@@ -100,7 +107,7 @@ export default function LandingPage({ onNavigate }: Props) {
         </nav>
 
         <button
-          onClick={() => onNavigate('dashboard')}
+          onClick={() => onNavigate('login')}
           className="md:hidden px-4 py-2 rounded-xl bg-[#0F2547] text-white text-sm font-bold"
         >
           Sign In
@@ -138,7 +145,7 @@ export default function LandingPage({ onNavigate }: Props) {
 
             <form onSubmit={handleSearch} className="flex gap-2 mb-7 max-w-xl">
               <div className="flex-1 relative">
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#64748B] text-lg">🔍</span>
+                <Search size={20} className="absolute left-4 top-1/2 -translate-y-1/2 text-[#64748B]" />
                 <input
                   type="text"
                   value={search}
@@ -157,16 +164,16 @@ export default function LandingPage({ onNavigate }: Props) {
 
             <div className="flex flex-wrap gap-3">
               <button
-                onClick={() => onNavigate('dashboard')}
-                className="px-8 py-3.5 rounded-xl bg-white text-[#0F2547] font-bold text-sm hover:bg-[#F1F5F9] transition-colors shadow-md"
+                onClick={() => onNavigate('login')}
+                className="px-8 py-3.5 rounded-xl bg-white text-[#0F2547] font-bold text-sm hover:bg-[#F1F5F9] transition-colors shadow-md flex items-center gap-2"
               >
-                🚀 Start Shopping
+                <Rocket size={18} /> Start Shopping
               </button>
               <button
-                onClick={() => onNavigate('search')}
-                className="px-8 py-3.5 rounded-xl border border-white/25 text-white font-semibold text-sm hover:bg-white/10 transition-colors"
+                onClick={() => onNavigate('login')}
+                className="px-8 py-3.5 rounded-xl border border-white/25 text-white font-semibold text-sm hover:bg-white/10 transition-colors flex items-center gap-2"
               >
-                🔍 Compare Prices
+                <Search size={18} /> Compare Prices
               </button>
             </div>
           </div>
@@ -203,13 +210,13 @@ export default function LandingPage({ onNavigate }: Props) {
         <div className="relative border-t border-white/10 bg-[#081730]/60 backdrop-blur-sm">
           <div className="max-w-6xl mx-auto px-6 md:px-12 py-5 grid grid-cols-2 md:grid-cols-4 gap-5">
             {[
-              { value: '3+', label: 'Supermarkets', icon: '🏪' },
-              { value: productCount, label: 'Products tracked', icon: '📦' },
-              { value: 'Live', label: 'Price updates', icon: '📡' },
-              { value: 'AI', label: 'Smart savings', icon: '🧠' },
+              { value: '3+', label: 'Supermarkets', icon: <Store size={20} className="text-[#D97706]" /> },
+              { value: productCount, label: 'Products tracked', icon: <Package size={20} className="text-[#D97706]" /> },
+              { value: 'Live', label: 'Price updates', icon: <Radio size={20} className="text-[#D97706]" /> },
+              { value: 'AI', label: 'Smart savings', icon: <Brain size={20} className="text-[#D97706]" /> },
             ].map(s => (
               <div key={s.label} className="flex items-center gap-3">
-                <span className="text-xl">{s.icon}</span>
+                {s.icon}
                 <div>
                   <div className="text-xl font-black text-[#D97706]" style={{ fontFamily: 'Outfit' }}>{s.value}</div>
                   <div className="text-xs text-[#64748B]">{s.label}</div>
@@ -227,18 +234,20 @@ export default function LandingPage({ onNavigate }: Props) {
             <h2 className="text-2xl font-black text-[#0F2547]" style={{ fontFamily: 'Outfit' }}>Popular Categories</h2>
             <p className="text-sm text-[#64748B] mt-0.5">Browse by category to find the best prices fast</p>
           </div>
-          <button onClick={() => onNavigate('search')} className="text-sm text-[#0F2547] font-semibold hover:underline">
-            View all →
+          <button onClick={() => onNavigate('login')} className="text-sm text-[#0F2547] font-semibold hover:underline flex items-center gap-1">
+            View all <ArrowRight size={16} />
           </button>
         </div>
         <div className="grid grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-3">
           {dynamicCategories.map(cat => (
             <button
               key={cat.id}
-              onClick={() => onNavigate('search')}
+              onClick={() => onNavigate('login')}
               className="flex flex-col items-center gap-2 p-3 rounded-2xl bg-[#F8FAFC] hover:bg-[#EFF6FF] hover:shadow-sm transition-all group border border-transparent hover:border-[#BFDBFE]"
             >
-              <span className="text-2xl group-hover:scale-110 transition-transform">{cat.icon}</span>
+              <div className="group-hover:scale-110 transition-transform">
+                {getCategoryIcon(cat.name)}
+              </div>
               <span className="text-[10px] text-[#475569] font-medium text-center leading-tight">{cat.name}</span>
             </button>
           ))}
@@ -260,7 +269,7 @@ export default function LandingPage({ onNavigate }: Props) {
                 {i < 4 && (
                   <div className="hidden md:block absolute right-0 top-7 w-1/2 border-t-2 border-dashed border-[#CBD5E1] z-0" />
                 )}
-                <div className="relative z-10 w-14 h-14 rounded-2xl bg-[#0F2547] flex items-center justify-center text-2xl mb-3 shadow-lg">
+                <div className="relative z-10 w-14 h-14 rounded-2xl bg-[#0F2547] flex items-center justify-center mb-3 shadow-lg">
                   {s.icon}
                 </div>
                 <div className="text-xs font-black text-[#D97706] mb-1 tracking-widest">{s.n}</div>
@@ -272,10 +281,10 @@ export default function LandingPage({ onNavigate }: Props) {
 
           <div className="text-center mt-12">
             <button
-              onClick={() => onNavigate('dashboard')}
-              className="px-10 py-4 rounded-2xl bg-[#0F2547] text-white font-bold text-base hover:bg-[#1A3A6B] transition-colors shadow-md"
+              onClick={() => onNavigate('login')}
+              className="px-10 py-4 rounded-2xl bg-[#0F2547] text-white font-bold text-base hover:bg-[#1A3A6B] transition-colors shadow-md flex items-center justify-center gap-2 mx-auto"
             >
-              Start Comparing Free →
+              Start Comparing Free <ArrowRight size={18} />
             </button>
           </div>
         </div>
@@ -291,7 +300,7 @@ export default function LandingPage({ onNavigate }: Props) {
           {STORE_BRANDS.map(store => (
             <button
               key={store.name}
-              onClick={() => onNavigate('supermarkets')}
+              onClick={() => onNavigate('login')}
               className="p-6 rounded-2xl text-left border border-[#E2E8F0] hover:shadow-md transition-all group"
               style={{ backgroundColor: store.bg }}
             >
@@ -303,7 +312,9 @@ export default function LandingPage({ onNavigate }: Props) {
               </div>
               <div className="font-black text-[#1E293B] text-lg mb-0.5" style={{ fontFamily: 'Outfit' }}>{store.name}</div>
               <div className="text-xs font-semibold mt-1" style={{ color: store.accent }}>{store.products} Data</div>
-              <div className="text-xs text-[#94A3B8] mt-0.5">📍 Lusaka & nationwide</div>
+              <div className="text-xs text-[#94A3B8] mt-0.5 flex items-center gap-1">
+                <MapPin size={12} /> Lusaka & nationwide
+              </div>
             </button>
           ))}
         </div>
@@ -322,15 +333,15 @@ export default function LandingPage({ onNavigate }: Props) {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
             {[
-              { icon: '⚖️', title: 'Cross-Store Comparison', desc: 'Compare prices for any product across Shoprite, Choppies, Pick n Pay — all in one place.' },
-              { icon: '📊', title: 'Unit-Price Analysis', desc: 'Find true value with price-per-kg, per-litre analysis. The cheapest pack isn\'t always the best deal.' },
-              { icon: '🤖', title: 'Basket Optimisation', desc: 'AI calculates the cheapest way to buy your whole shopping list, splitting intelligently across stores.' },
-              { icon: '📈', title: 'Price History & Alerts', desc: 'Track prices over time, spot trends, and get notified the moment a price hits your target.' },
-              { icon: '🔄', title: 'Cheaper Alternatives', desc: 'Discover substitute products that fulfil the same need for less — matched by category, size and type.' },
-              { icon: '💡', title: 'Explainable AI', desc: 'Every recommendation comes with a plain-language "Why?" so you always understand the reasoning.' },
+              { icon: <Scale size={32} className="text-[#D97706]" />, title: 'Cross-Store Comparison', desc: 'Compare prices for any product across Shoprite, Choppies, Pick n Pay — all in one place.' },
+              { icon: <BarChart size={32} className="text-[#D97706]" />, title: 'Unit-Price Analysis', desc: 'Find true value with price-per-kg, per-litre analysis. The cheapest pack isn\'t always the best deal.' },
+              { icon: <Bot size={32} className="text-[#D97706]" />, title: 'Basket Optimisation', desc: 'AI calculates the cheapest way to buy your whole shopping list, splitting intelligently across stores.' },
+              { icon: <TrendingUp size={32} className="text-[#D97706]" />, title: 'Price History & Alerts', desc: 'Track prices over time, spot trends, and get notified the moment a price hits your target.' },
+              { icon: <RefreshCw size={32} className="text-[#D97706]" />, title: 'Cheaper Alternatives', desc: 'Discover substitute products that fulfil the same need for less — matched by category, size and type.' },
+              { icon: <Lightbulb size={32} className="text-[#D97706]" />, title: 'Explainable AI', desc: 'Every recommendation comes with a plain-language "Why?" so you always understand the reasoning.' },
             ].map(f => (
-              <div key={f.title} className="bg-white/8 border border-white/10 rounded-2xl p-6 hover:bg-white/12 transition-colors">
-                <div className="text-3xl mb-3">{f.icon}</div>
+              <div key={f.title} className="bg-white/5 border border-white/10 rounded-2xl p-6 hover:bg-white/10 transition-colors">
+                <div className="mb-4">{f.icon}</div>
                 <div className="font-bold text-white mb-2" style={{ fontFamily: 'Outfit' }}>{f.title}</div>
                 <div className="text-sm text-[#94A3B8] leading-relaxed">{f.desc}</div>
               </div>
@@ -348,8 +359,8 @@ export default function LandingPage({ onNavigate }: Props) {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
           {TESTIMONIALS.map(t => (
             <div key={t.name} className="bg-white rounded-2xl border border-[#E2E8F0] p-6 hover:shadow-sm transition-all">
-              <div className="flex items-center gap-1.5 mb-3">
-                {[...Array(5)].map((_, i) => <span key={i} className="text-[#D97706] text-sm">★</span>)}
+              <div className="flex items-center gap-1 mb-3">
+                {[...Array(5)].map((_, i) => <Star key={i} size={16} fill="#D97706" className="text-[#D97706]" />)}
               </div>
               <p className="text-sm text-[#475569] leading-relaxed mb-4">"{t.text}"</p>
               <div className="flex items-center justify-between">
@@ -373,14 +384,14 @@ export default function LandingPage({ onNavigate }: Props) {
           <p className="text-[#FEF3C7] mb-8 text-lg">Join thousands of Zambian shoppers saving money every week.</p>
           <div className="flex flex-wrap gap-3 justify-center">
             <button
-              onClick={() => onNavigate('dashboard')}
-              className="px-10 py-4 rounded-2xl bg-white text-[#D97706] font-black text-lg hover:bg-[#FEF9C3] transition-colors shadow-lg"
+              onClick={() => onNavigate('login')}
+              className="px-10 py-4 rounded-2xl bg-white text-[#D97706] font-black text-lg hover:bg-[#FEF9C3] transition-colors shadow-lg flex items-center gap-2"
             >
-              Get Started Free
+              <Rocket size={20} /> Get Started Free
             </button>
             <button
-              onClick={() => onNavigate('search')}
-              className="px-10 py-4 rounded-2xl border-2 border-white/40 text-white font-bold text-lg hover:bg-white/10 transition-colors"
+              onClick={() => onNavigate('login')}
+              className="px-10 py-4 rounded-2xl border-2 border-white/40 text-white font-bold text-lg hover:bg-white/10 transition-colors flex items-center gap-2"
             >
               Browse Prices
             </button>
@@ -403,13 +414,13 @@ export default function LandingPage({ onNavigate }: Props) {
               <div>
                 <div className="text-[#64748B] font-semibold mb-3 text-xs uppercase tracking-wide">Features</div>
                 {['Price Comparison', 'Basket Optimisation', 'Price Alerts', 'Price History', 'Alternatives'].map(l => (
-                  <button key={l} onClick={() => onNavigate('dashboard')} className="block text-[#475569] hover:text-white transition-colors mb-1.5 text-left">{l}</button>
+                  <button key={l} onClick={() => onNavigate('login')} className="block text-[#475569] hover:text-white transition-colors mb-1.5 text-left">{l}</button>
                 ))}
               </div>
               <div>
                 <div className="text-[#64748B] font-semibold mb-3 text-xs uppercase tracking-wide">Stores</div>
                 {STORE_BRANDS.map(s => (
-                  <button key={s.name} onClick={() => onNavigate('supermarkets')} className="block text-[#475569] hover:text-white transition-colors mb-1.5 text-left">{s.name}</button>
+                  <button key={s.name} onClick={() => onNavigate('login')} className="block text-[#475569] hover:text-white transition-colors mb-1.5 text-left">{s.name}</button>
                 ))}
               </div>
             </div>

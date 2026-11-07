@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import api from '../api/client';
+import { MapPin, Map, ArrowRight } from 'lucide-react';
 
 type Page = 'landing' | 'dashboard' | 'search' | 'compare' | 'basket' | 'optimise' | 'history' | 'alerts' | 'deals' | 'supermarkets' | 'profile' | 'admin' | 'budget' | 'location' | 'substitutions';
 
@@ -142,7 +143,9 @@ export default function SupermarketsPage({ onNavigate }: Props) {
               <div className="absolute bottom-3 left-4 right-4 flex items-end justify-between">
                 <div>
                   <div className="text-white font-black text-xl" style={{ fontFamily: 'Outfit' }}>{store.name}</div>
-                  <div className="text-white/70 text-xs">📍 Lusaka, Zambia</div>
+                  <div className="text-white/70 text-xs flex items-center gap-1">
+                    <MapPin size={12} /> Lusaka, Zambia
+                  </div>
                 </div>
                 <div className="text-right">
                   <div className="px-2.5 py-1 rounded-lg bg-white/20 backdrop-blur-sm text-white text-xs font-bold">
@@ -175,7 +178,7 @@ export default function SupermarketsPage({ onNavigate }: Props) {
                 {store.branches.map(loc => (
                   <div key={loc.branch} className="flex items-center justify-between px-3 py-2 rounded-xl bg-[#F8FAFC]">
                     <div className="flex items-center gap-2">
-                      <span className="text-sm">📍</span>
+                      <MapPin size={14} className="text-[#94A3B8]" />
                       <div>
                         <div className="text-xs font-semibold text-[#1E293B]">{store.name} {loc.branch}</div>
                         <div className="text-xs text-[#94A3B8]">{loc.distance} km · {loc.travelTime}</div>
@@ -205,13 +208,13 @@ export default function SupermarketsPage({ onNavigate }: Props) {
 
       {/* Location Map Teaser */}
       <div className="bg-[#0F2547] rounded-2xl p-6 flex items-center gap-5">
-        <div className="text-5xl">🗺️</div>
+        <Map size={48} className="text-[#D97706]" />
         <div className="flex-1">
           <h3 className="font-black text-xl text-white mb-1" style={{ fontFamily: 'Outfit' }}>Find Stores Near You</h3>
           <p className="text-sm text-[#94A3B8]">See which supermarkets are closest and have your full shopping list available.</p>
         </div>
-        <button onClick={() => onNavigate('location')} className="px-6 py-3 rounded-xl bg-[#D97706] text-white font-bold text-sm hover:bg-[#B45309] transition-colors whitespace-nowrap">
-          Find Nearby →
+        <button onClick={() => onNavigate('location')} className="px-6 py-3 rounded-xl bg-[#D97706] text-white font-bold text-sm hover:bg-[#B45309] transition-colors whitespace-nowrap flex items-center gap-2">
+          Find Nearby <ArrowRight size={16} />
         </button>
       </div>
     </div>

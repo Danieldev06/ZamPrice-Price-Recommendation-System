@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import api from '../api/client';
+import { Wallet, Scale, MapPin, Store, Tag, Flame, Package, ShoppingBasket, Calendar, LogOut, Globe } from 'lucide-react';
 
 type Page = 'landing' | 'dashboard' | 'search' | 'compare' | 'basket' | 'optimise' | 'history' | 'alerts' | 'deals' | 'supermarkets' | 'profile' | 'admin' | 'budget' | 'location' | 'substitutions';
 
@@ -15,13 +16,13 @@ interface User {
 }
 
 const PREFS = [
-  { id: 'lowest_price', label: 'Lowest price', icon: '💰' },
-  { id: 'best_value', label: 'Best value per unit', icon: '⚖️' },
-  { id: 'closest_store', label: 'Closest supermarket', icon: '📍' },
-  { id: 'fewer_stores', label: 'Fewer stores to visit', icon: '🏪' },
-  { id: 'preferred_brands', label: 'Preferred brands', icon: '🏷️' },
-  { id: 'discounts', label: 'Discounts & promotions', icon: '🔥' },
-  { id: 'availability', label: 'Product availability', icon: '📦' },
+  { id: 'lowest_price', label: 'Lowest price', icon: <Wallet size={20} className="text-[#0F2547]" /> },
+  { id: 'best_value', label: 'Best value per unit', icon: <Scale size={20} className="text-[#0F2547]" /> },
+  { id: 'closest_store', label: 'Closest supermarket', icon: <MapPin size={20} className="text-[#0F2547]" /> },
+  { id: 'fewer_stores', label: 'Fewer stores to visit', icon: <Store size={20} className="text-[#0F2547]" /> },
+  { id: 'preferred_brands', label: 'Preferred brands', icon: <Tag size={20} className="text-[#0F2547]" /> },
+  { id: 'discounts', label: 'Discounts & promotions', icon: <Flame size={20} className="text-[#0F2547]" /> },
+  { id: 'availability', label: 'Product availability', icon: <Package size={20} className="text-[#0F2547]" /> },
 ];
 
 const STORES = ['Shoprite', 'Choppies', 'Pick n Pay'];
@@ -73,7 +74,7 @@ export default function ProfilePage({ onNavigate }: Props) {
 
   const handleSignOut = () => {
     localStorage.removeItem('zamprice_token');
-    localStorage.removeItem('zamprice_basket'); // Optional: clear basket on logout
+    localStorage.removeItem('zamprice_basket');
     onNavigate('landing');
   };
 
@@ -96,8 +97,8 @@ export default function ProfilePage({ onNavigate }: Props) {
         <div className="flex-1">
           <div className="text-xl font-black text-white" style={{ fontFamily: 'Outfit' }}>{user.name}</div>
           <div className="text-sm text-[#94A3B8]">{user.email}</div>
-          <div className="text-xs text-[#64748B] mt-1">
-            🇿🇲 {user.role === 'admin' ? 'Administrator' : 'Member'} · Lusaka, Zambia
+          <div className="text-xs text-[#64748B] mt-1 flex items-center gap-1.5">
+            <Globe size={14} /> {user.role === 'admin' ? 'Administrator' : 'Member'} · Lusaka, Zambia
           </div>
         </div>
         <div className="text-right hidden md:block">
@@ -135,7 +136,7 @@ export default function ProfilePage({ onNavigate }: Props) {
                 return (
                   <button key={pref.id} onClick={() => togglePref(pref.id)}
                     className={`flex items-center gap-3 p-4 rounded-xl border-2 text-left transition-all ${selected ? 'border-[#0F2547] bg-[#EFF6FF]' : 'border-[#E2E8F0] bg-white hover:border-[#0F2547]/30'}`}>
-                    <span className="text-xl">{pref.icon}</span>
+                    {pref.icon}
                     <span className="text-sm font-medium text-[#1E293B]">{pref.label}</span>
                     <span className={`ml-auto w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-colors ${selected ? 'bg-[#0F2547] border-[#0F2547]' : 'border-[#CBD5E1]'}`}>
                       {selected && <span className="text-white text-xs">✓</span>}
@@ -182,7 +183,9 @@ export default function ProfilePage({ onNavigate }: Props) {
           </div>
           
           <div className="bg-white rounded-2xl border border-[#E2E8F0] p-5 flex items-center gap-4 hover:shadow-sm transition-all cursor-pointer" onClick={() => onNavigate('basket')}>
-            <div className="w-12 h-12 rounded-2xl bg-[#EFF6FF] flex items-center justify-center text-2xl flex-shrink-0">🛒</div>
+            <div className="w-12 h-12 rounded-2xl bg-[#EFF6FF] flex items-center justify-center flex-shrink-0">
+              <ShoppingBasket size={24} className="text-[#0F2547]" />
+            </div>
             <div className="flex-1">
               <div className="font-bold text-[#1E293B]" style={{ fontFamily: 'Outfit' }}>Current Basket</div>
               <div className="text-xs text-[#64748B]">
@@ -195,7 +198,9 @@ export default function ProfilePage({ onNavigate }: Props) {
           </div>
 
           <div className="bg-white rounded-2xl border border-[#E2E8F0] p-5 flex items-center gap-4 opacity-50">
-            <div className="w-12 h-12 rounded-2xl bg-[#EFF6FF] flex items-center justify-center text-2xl flex-shrink-0">📅</div>
+            <div className="w-12 h-12 rounded-2xl bg-[#F8FAFC] flex items-center justify-center flex-shrink-0">
+              <Calendar size={24} className="text-[#94A3B8]" />
+            </div>
             <div className="flex-1">
               <div className="font-bold text-[#1E293B]" style={{ fontFamily: 'Outfit' }}>Weekly Groceries (Mock)</div>
               <div className="text-xs text-[#64748B]">12 items · Updated 2 Sep 2024</div>
@@ -255,8 +260,8 @@ export default function ProfilePage({ onNavigate }: Props) {
             </button>
           </div>
           
-          <button onClick={handleSignOut} className="w-full py-3.5 rounded-2xl border border-[#FEE2E2] text-[#DC2626] text-sm font-semibold hover:bg-[#FEF2F2] transition-colors">
-            Sign Out
+          <button onClick={handleSignOut} className="w-full py-3.5 rounded-2xl border border-[#FEE2E2] text-[#DC2626] text-sm font-semibold hover:bg-[#FEF2F2] transition-colors flex items-center justify-center gap-2">
+            <LogOut size={18} /> Sign Out
           </button>
         </div>
       )}

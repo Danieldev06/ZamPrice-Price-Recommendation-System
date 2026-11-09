@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import api from '../api/client';
+import { useAuth } from '../context/AuthContext';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import { Lock, Package, Store, TrendingUp, AlertTriangle, LogOut } from 'lucide-react';
 
 type Page = 'landing' | 'dashboard' | 'search' | 'compare' | 'basket' | 'optimise' | 'history' | 'alerts' | 'deals' | 'supermarkets' | 'profile' | 'admin' | 'budget' | 'location' | 'substitutions';
 
@@ -24,7 +26,6 @@ interface DataQuality {
 }
 
 const ADMIN_NAV = ['Dashboard', 'Products', 'Prices'];
-// Note: Supermarkets, Categories, Promotions, Users are not fully implemented in the backend yet.
 
 const PRICE_TREND_DATA = [
   { date: '29 Aug', shoprite: 198, choppies: 202, picknpay: 208 },
@@ -43,21 +44,20 @@ const STORE_COMPARISON = [
 ];
 
 export default function AdminPage({ onNavigate }: Props) {
+  const { logout } = useAuth(); // <-- Added Auth Hook
+
   const [activeSection, setActiveSection] = useState('Dashboard');
   const [showAddProduct, setShowAddProduct] = useState(false);
   const [showAddPrice, setShowAddPrice] = useState(false);
   
-  // Data State
   const [products, setProducts] = useState<Product[]>([]);
   const [quality, setQuality] = useState<DataQuality | null>(null);
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState('');
 
-  // Form State
   const [newProduct, setNewProduct] = useState({ name: '', brand: '', category: '', base_unit: 'item' });
   const [newPrice, setNewPrice] = useState({ product_id: '', branch_id: '1', quantity: '1', unit: 'item', price: '' });
 
-  // Fetch Admin Data
   const loadData = async () => {
     try {
       setLoading(true);
@@ -127,7 +127,7 @@ export default function AdminPage({ onNavigate }: Props) {
     return (
       <div className="flex h-screen items-center justify-center bg-[#F8FAFC]">
         <div className="bg-white p-8 rounded-2xl border border-[#E2E8F0] max-w-md text-center">
-          <div className="text-4xl mb-4">🔒</div>
+          <Lock size={48} className="text-[#DC2626] mx-auto mb-4" />
           <h2 className="text-xl font-bold text-[#0F2547] mb-2">Admin Access Only</h2>
           <p className="text-[#64748B] mb-6">{errorMsg}</p>
           <button onClick={() => onNavigate('dashboard')} className="px-6 py-2.5 rounded-xl bg-[#0F2547] text-white font-semibold">
@@ -159,9 +159,17 @@ export default function AdminPage({ onNavigate }: Props) {
             </button>
           ))}
         </nav>
-        <div className="p-4 border-t border-[#0F2547]">
+        
+        {/* UPDATED FOOTER WITH SIGN OUT */}
+        <div className="p-4 border-t border-[#0F2547] space-y-1">
           <button onClick={() => onNavigate('dashboard')} className="w-full text-left px-3 py-2 text-xs text-[#64748B] hover:text-white transition-colors">
             ← Back to App
+          </button>
+          <button 
+            onClick={() => { logout(); onNavigate('login'); }} 
+            className="w-full text-left px-3 py-2 text-xs font-bold text-[#DC2626] hover:text-[#F87171] transition-colors flex items-center gap-2"
+          >
+            <LogOut size={14} /> Sign Out
           </button>
         </div>
       </div>
@@ -169,7 +177,6 @@ export default function AdminPage({ onNavigate }: Props) {
       {/* Main Content */}
       <div className="flex-1 overflow-y-auto">
         <div className="px-6 py-6">
-          {/* Header */}
           <div className="flex items-center justify-between mb-6">
             <div>
               <h1 className="text-2xl font-black text-[#0F2547]" style={{ fontFamily: 'Outfit' }}>Admin {activeSection}</h1>
@@ -194,14 +201,14 @@ export default function AdminPage({ onNavigate }: Props) {
               {/* KPI Cards */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
                 {[
-                  { label: 'Total Products', value: quality.products.toString(), change: 'Live DB', color: '#0F2547', bg: '#EFF6FF', icon: '📦' },
-                  { label: 'Branches Tracked', value: quality.branches.toString(), change: 'Across stores', color: '#16A34A', bg: '#F0FDF4', icon: '🏪' },
-                  { label: 'Price Records', value: quality.total_price_records.toString(), change: 'Observations', color: '#D97706', bg: '#FEF3C7', icon: '💹' },
-                  { label: 'Stale Records', value: quality.stale_records.toString(), change: 'Needs update', color: quality.stale_records > 0 ? '#DC2626' : '#16A34A', bg: '#FEF2F2', icon: '⚠️' },
+                  { label: 'Total Products', value: quality.products.toString(), change: 'Live DB', color: '#0F2547', bg: '#EFF6FF', icon: <Package size={20} className="text-[#0F2547]" /> },
+                  { label: 'Branches Tracked', value: quality.branches.toString(), change: 'Across stores', color: '#16A34A', bg: '#F0FDF4', icon: <Store size={20} className="text-[#16A34A]" /> },
+                  { label: 'Price Records', value: quality.total_price_records.toString(), change: 'Observations', color: '#D97706', bg: '#FEF3C7', icon: <TrendingUp size={20} className="text-[#D97706]" /> },
+                  { label: 'Stale Records', value: quality.stale_records.toString(), change: 'Needs update', color: quality.stale_records > 0 ? '#DC2626' : '#16A34A', bg: '#FEF2F2', icon: <AlertTriangle size={20} className={quality.stale_records > 0 ? 'text-[#DC2626]' : 'text-[#16A34A]'} /> },
                 ].map(kpi => (
                   <div key={kpi.label} className="bg-white rounded-2xl border border-[#E2E8F0] p-5" style={{ backgroundColor: kpi.bg }}>
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-xl">{kpi.icon}</span>
+                      <div>{kpi.icon}</div>
                       <span className="text-xs font-medium text-[#64748B]">{kpi.change}</span>
                     </div>
                     <div className="text-2xl font-black" style={{ fontFamily: 'Outfit', color: kpi.color }}>{kpi.value}</div>
@@ -212,7 +219,6 @@ export default function AdminPage({ onNavigate }: Props) {
 
               {/* Charts Grid */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-6">
-                {/* Price Trends */}
                 <div className="bg-white rounded-2xl border border-[#E2E8F0] p-5">
                   <h3 className="font-bold text-[#0F2547] mb-1" style={{ fontFamily: 'Outfit' }}>Mealie Meal Price Trends (Mock)</h3>
                   <p className="text-xs text-[#64748B] mb-4">7-day average price by store (K)</p>
@@ -230,7 +236,6 @@ export default function AdminPage({ onNavigate }: Props) {
                   </ResponsiveContainer>
                 </div>
 
-                {/* Store Comparison */}
                 <div className="bg-white rounded-2xl border border-[#E2E8F0] p-5">
                   <h3 className="font-bold text-[#0F2547] mb-1" style={{ fontFamily: 'Outfit' }}>Average Basket by Store (Mock)</h3>
                   <p className="text-xs text-[#64748B] mb-4">Current average basket price comparison</p>
@@ -278,7 +283,7 @@ export default function AdminPage({ onNavigate }: Props) {
 
           {activeSection === 'Prices' && (
             <div className="bg-white rounded-2xl border border-[#E2E8F0] p-10 text-center">
-              <div className="text-5xl mb-4">💹</div>
+              <TrendingUp size={48} className="text-[#D97706] mx-auto mb-4" />
               <h3 className="text-xl font-bold text-[#1E293B] mb-2" style={{ fontFamily: 'Outfit' }}>Price Management</h3>
               <p className="text-[#64748B] text-sm mb-6">You have {quality?.total_price_records} price records in the database.</p>
               <button onClick={() => setShowAddPrice(true)} className="px-6 py-3 rounded-xl bg-[#0F2547] text-white text-sm font-semibold">

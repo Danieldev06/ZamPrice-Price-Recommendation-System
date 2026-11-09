@@ -29,6 +29,7 @@ interface BackendPlan {
   saving: number;
   stores_visited: number;
   stores: BackendStore[];
+  rawLines: any[]; // <-- Added to store the raw backend data for saving
 }
 
 export default function OptimisePage({ onNavigate }: Props) {
@@ -69,7 +70,14 @@ export default function OptimisePage({ onNavigate }: Props) {
           });
 
           const saving = originalTotal - backendPlan.total;
-          return { total: backendPlan.total, original: originalTotal, saving: saving, stores_visited: backendPlan.store_count, stores: Object.values(storesMap) };
+          return { 
+            total: backendPlan.total, 
+            original: originalTotal, 
+            saving: saving, 
+            stores_visited: backendPlan.store_count, 
+            stores: Object.values(storesMap),
+            rawLines: backendPlan.lines // <-- Keep the raw lines here!
+          };
         };
 
         const baselineTotal = data.baseline_single_store ? data.baseline_single_store.total : data.plans[0].total;
@@ -96,6 +104,27 @@ export default function OptimisePage({ onNavigate }: Props) {
   if (!plans) return null;
 
   const plan = plans[mode];
+
+  // --- NEW FUNCTION TO ACTUALLY SAVE THE PLAN ---
+  const handleApplyPlan = () => {
+    if (!plan || !plan.rawLines) return;
+    
+    // Map the raw lines to the format expected by localStorage
+    const newBasket = plan.rawLines.map((line: any) => ({
+      product_id: line.product_id,
+      quantity: line.quantity
+    }));
+
+    // Save to localStorage
+    localStorage.setItem('zamprice_basket', JSON.stringify(newBasket));
+    
+    setApplied(true);
+    
+    // Redirect to basket after 1.5 seconds
+    setTimeout(() => {
+      onNavigate('basket');
+    }, 1500);
+  };
 
   return (
     <div className="max-w-5xl mx-auto px-4 md:px-8 py-8 pb-24 md:pb-8">
@@ -178,9 +207,10 @@ export default function OptimisePage({ onNavigate }: Props) {
       </div>
 
       <div className="flex gap-3">
-        <button onClick={() => setApplied(true)}
+        {/* Wired up the new handleApplyPlan function here */}
+        <button onClick={handleApplyPlan}
           className={`flex-1 py-4 rounded-2xl font-bold text-base transition-colors flex items-center justify-center gap-2 ${applied ? 'bg-[#16A34A] text-white' : 'bg-[#0F2547] text-white hover:bg-[#1A3A6B]'}`}>
-          {applied ? <><CheckCircle2 size={20} /> Plan Applied to Basket!</> : 'Apply This Plan to My Basket'}
+          {applied ? <><CheckCircle2 size={20} /> Plan Applied! Redirecting...</> : 'Apply This Plan to My Basket'}
         </button>
         <button onClick={() => onNavigate('location')} className="px-6 py-4 rounded-2xl border border-[#E2E8F0] text-sm font-semibold text-[#475569] hover:bg-[#F8FAFC] transition-colors flex items-center gap-2">
           <Navigation size={18} /> Find Stores

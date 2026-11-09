@@ -47,9 +47,8 @@ function AppContent() {
   // Render the correct page based on state
   return (
     <div className="min-h-screen bg-[#F8FAFC]">
-      {/* RENDER NAVBAR HERE: Only shows if user is logged in. 
-          (The NavBar component itself hides on 'landing' and 'login') */}
-      {user && (
+      {/* RENDER NAVBAR HERE: Only shows if user is logged in AND not on the admin page */}
+      {user && activePage !== 'admin' && (
         <NavBar currentPage={activePage} onNavigate={setActivePage} />
       )}
 

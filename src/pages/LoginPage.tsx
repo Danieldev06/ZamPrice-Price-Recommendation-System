@@ -24,10 +24,17 @@ export default function LoginPage({ onNavigate }: Props) {
     try {
       if (isRegister) {
         await register(name, email, password);
+        onNavigate('dashboard'); // New users always go to consumer dashboard
       } else {
-        await login(email, password);
+        const loggedUser = await login(email, password);
+        
+        // --- NEW: Redirect based on role ---
+        if (loggedUser && loggedUser.role === 'admin') {
+          onNavigate('admin');
+        } else {
+          onNavigate('dashboard');
+        }
       }
-      onNavigate('dashboard');
     } catch (err: any) {
       setError(err.response?.data?.detail || 'Authentication failed. Check your credentials.');
     } finally {

@@ -1,10 +1,10 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import api from "../api/client";
 
-const AuthContext = createContext(null);
+const AuthContext = createContext<any>(null);
 
-export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null);
+export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -16,14 +16,15 @@ export function AuthProvider({ children }) {
       .finally(() => setLoading(false));
   }, []);
 
-  async function login(email, password) {
+  async function login(email: string, password: string) {
     const { data } = await api.post("/auth/login", { email, password });
     localStorage.setItem("zamprice_token", data.access_token);
     const me = await api.get("/auth/me");
     setUser(me.data);
+    return me.data; // <--- CRUCIAL FIX
   }
 
-  async function register(name, email, password) {
+  async function register(name: string, email: string, password: string) {
     await api.post("/auth/register", { name, email, password });
     await login(email, password);
   }

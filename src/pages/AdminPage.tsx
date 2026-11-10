@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import api from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
-import { Lock, Package, Store, TrendingUp, AlertTriangle, LogOut } from 'lucide-react';
+import { Lock, Package, Store, TrendingUp, AlertTriangle, LogOut, Upload } from 'lucide-react';
 
 type Page = 'landing' | 'dashboard' | 'search' | 'compare' | 'basket' | 'optimise' | 'history' | 'alerts' | 'deals' | 'supermarkets' | 'profile' | 'admin' | 'budget' | 'location' | 'substitutions';
 
@@ -27,24 +27,9 @@ interface DataQuality {
 
 const ADMIN_NAV = ['Dashboard', 'Products', 'Prices'];
 
-const PRICE_TREND_DATA = [
-  { date: '29 Aug', shoprite: 198, choppies: 202, picknpay: 208 },
-  { date: '30 Aug', shoprite: 195, choppies: 200, picknpay: 206 },
-  { date: '31 Aug', shoprite: 192, choppies: 198, picknpay: 205 },
-  { date: '01 Sep', shoprite: 190, choppies: 196, picknpay: 205 },
-  { date: '02 Sep', shoprite: 188, choppies: 194, picknpay: 204 },
-  { date: '03 Sep', shoprite: 186, choppies: 193, picknpay: 205 },
-  { date: '04 Sep', shoprite: 185, choppies: 192, picknpay: 205 },
-];
-
-const STORE_COMPARISON = [
-  { store: 'Shoprite', avgPrice: 428 },
-  { store: 'Choppies', avgPrice: 415 },
-  { store: 'Pick n Pay', avgPrice: 452 },
-];
-
 export default function AdminPage({ onNavigate }: Props) {
-  const { logout } = useAuth(); // <-- Added Auth Hook
+  const { logout } = useAuth();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [activeSection, setActiveSection] = useState('Dashboard');
   const [showAddProduct, setShowAddProduct] = useState(false);
@@ -54,6 +39,10 @@ export default function AdminPage({ onNavigate }: Props) {
   const [quality, setQuality] = useState<DataQuality | null>(null);
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState('');
+
+  const [trendData, setTrendData] = useState<any[]>([]);
+  const [storeData, setStoreData] = useState<any[]>([]);
+  const [trendProductName, setTrendProductName] = useState('');
 
   const [newProduct, setNewProduct] = useState({ name: '', brand: '', category: '', base_unit: 'item' });
   const [newPrice, setNewPrice] = useState({ product_id: '', branch_id: '1', quantity: '1', unit: 'item', price: '' });
@@ -68,9 +57,47 @@ export default function AdminPage({ onNavigate }: Props) {
       ]);
       setProducts(prodRes.data);
       setQuality(qualRes.data);
+
+      if (prodRes.data.length > 0) {
+        const firstProduct = prodRes.data[0];
+        setTrendProductName(firstProduct.name);
+        
+        const compRes = await api.get(`/products/${firstProduct.id}/comparison`);
+        const branchMap: Record<number, string> = {};
+        compRes.data.options.forEach((opt: any) => {
+          branchMap[opt.branch_id] = opt.supermarket;
+        });
+
+        const histRes = await api.get(`/products/${firstProduct.id}/history`);
+        const map: Record<string, any> = {};
+        histRes.data.forEach((h: any) => {
+          const dateStr = new Date(h.observed_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+          const storeName = branchMap[h.branch_id] || 'Unknown';
+          if (!map[dateStr]) map[dateStr] = { date: dateStr };
+          map[dateStr][storeName] = h.price;
+        });
+        setTrendData(Object.values(map).slice(-15));
+      }
+
+      const storeTotals: Record<string, { total: number, count: number }> = {};
+      for (const p of prodRes.data) {
+        const c = await api.get(`/products/${p.id}/comparison`);
+        if (c.data.options) {
+          c.data.options.forEach((opt: any) => {
+            if (!storeTotals[opt.supermarket]) storeTotals[opt.supermarket] = { total: 0, count: 0 };
+            storeTotals[opt.supermarket].total += opt.effective_price;
+            storeTotals[opt.supermarket].count += 1;
+          });
+        }
+      }
+      setStoreData(Object.keys(storeTotals).map(storeName => ({
+        store: storeName,
+        avgPrice: Math.round(storeTotals[storeName].total / storeTotals[storeName].count)
+      })));
+
     } catch (err: any) {
       if (err.response?.status === 403) {
-        setErrorMsg('Access Denied: You must be logged in as an Administrator to view this page.');
+        setErrorMsg('Access Denied: You must be logged in as an Administrator.');
       } else {
         setErrorMsg('Failed to load admin data.');
       }
@@ -79,29 +106,31 @@ export default function AdminPage({ onNavigate }: Props) {
     }
   };
 
-  useEffect(() => {
-    loadData();
-  }, []);
+  useEffect(() => { loadData(); }, []);
 
   const handleCreateProduct = async () => {
-    if (!newProduct.name) return;
+    if (!newProduct.name) return alert("Product name is required.");
     try {
-      await api.post('/admin/products', {
-        name: newProduct.name,
-        brand: newProduct.brand || null,
-        category: newProduct.category || null,
-        base_unit: newProduct.base_unit
+      // FIXED: Sending as query parameters, not a JSON body
+      await api.post('/admin/products', null, {
+        params: {
+          name: newProduct.name,
+          brand: newProduct.brand || undefined,
+          category: newProduct.category || undefined,
+          base_unit: newProduct.base_unit
+        }
       });
       setShowAddProduct(false);
       setNewProduct({ name: '', brand: '', category: '', base_unit: 'item' });
       loadData();
-    } catch (err) {
-      alert("Failed to create product. Check console.");
+      alert("Product created successfully!");
+    } catch (err: any) {
+      alert("Failed to create product: " + (err.response?.data?.detail || err.message));
     }
   };
 
   const handleAddPrice = async () => {
-    if (!newPrice.product_id || !newPrice.price) return;
+    if (!newPrice.product_id || !newPrice.price) return alert("Product and price are required.");
     try {
       await api.post('/admin/prices', {
         product_id: Number(newPrice.product_id),
@@ -116,9 +145,53 @@ export default function AdminPage({ onNavigate }: Props) {
       setNewPrice({ product_id: '', branch_id: '1', quantity: '1', unit: 'item', price: '' });
       loadData();
       alert("Price added successfully!");
-    } catch (err) {
-      alert("Failed to add price.");
+    } catch (err: any) {
+      alert("Failed to add price: " + (err.response?.data?.detail || err.message));
     }
+  };
+
+  const handleCSVUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      const text = event.target?.result as string;
+      const lines = text.split('\n').filter(line => line.trim() !== '');
+      
+      let successCount = 0;
+      let failCount = 0;
+
+      // Skip the first line (headers) and loop through the rest
+      for (let i = 1; i < lines.length; i++) {
+        const [product_id, branch_id, quantity, unit, price] = lines[i].split(',');
+        
+        if (product_id && branch_id && quantity && unit && price) {
+          try {
+            await api.post('/admin/prices', {
+              product_id: Number(product_id.trim()),
+              branch_id: Number(branch_id.trim()),
+              quantity: Number(quantity.trim()),
+              unit: unit.trim(),
+              price: Number(price.trim()),
+              available: true,
+              source: 'CSV Upload'
+            });
+            successCount++;
+          } catch (err) {
+            console.error(`Row ${i} failed`, err);
+            failCount++;
+          }
+        }
+      }
+      
+      alert(`CSV Import Complete!\n✅ Success: ${successCount}\n❌ Failed: ${failCount}`);
+      loadData(); // Refresh charts and tables
+      
+      // Reset file input
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    };
+    reader.readAsText(file);
   };
 
   if (loading) return <div className="p-12 text-center text-[#64748B]">Loading Admin Data...</div>;
@@ -130,9 +203,7 @@ export default function AdminPage({ onNavigate }: Props) {
           <Lock size={48} className="text-[#DC2626] mx-auto mb-4" />
           <h2 className="text-xl font-bold text-[#0F2547] mb-2">Admin Access Only</h2>
           <p className="text-[#64748B] mb-6">{errorMsg}</p>
-          <button onClick={() => onNavigate('dashboard')} className="px-6 py-2.5 rounded-xl bg-[#0F2547] text-white font-semibold">
-            Return Home
-          </button>
+          <button onClick={() => onNavigate('dashboard')} className="px-6 py-2.5 rounded-xl bg-[#0F2547] text-white font-semibold">Return Home</button>
         </div>
       </div>
     );
@@ -159,16 +230,9 @@ export default function AdminPage({ onNavigate }: Props) {
             </button>
           ))}
         </nav>
-        
-        {/* UPDATED FOOTER WITH SIGN OUT */}
         <div className="p-4 border-t border-[#0F2547] space-y-1">
-          <button onClick={() => onNavigate('dashboard')} className="w-full text-left px-3 py-2 text-xs text-[#64748B] hover:text-white transition-colors">
-            ← Back to App
-          </button>
-          <button 
-            onClick={() => { logout(); onNavigate('login'); }} 
-            className="w-full text-left px-3 py-2 text-xs font-bold text-[#DC2626] hover:text-[#F87171] transition-colors flex items-center gap-2"
-          >
+          <button onClick={() => onNavigate('dashboard')} className="w-full text-left px-3 py-2 text-xs text-[#64748B] hover:text-white transition-colors">← Back to App</button>
+          <button onClick={() => { logout(); onNavigate('login'); }} className="w-full text-left px-3 py-2 text-xs font-bold text-[#DC2626] hover:text-[#F87171] transition-colors flex items-center gap-2">
             <LogOut size={14} /> Sign Out
           </button>
         </div>
@@ -184,21 +248,16 @@ export default function AdminPage({ onNavigate }: Props) {
             </div>
             <div className="flex gap-2">
               {activeSection === 'Products' && (
-                <button onClick={() => setShowAddProduct(true)} className="px-4 py-2.5 rounded-xl bg-[#0F2547] text-white text-sm font-semibold hover:bg-[#1A3A6B] transition-colors">
-                  + Add Product
-                </button>
+                <button onClick={() => setShowAddProduct(true)} className="px-4 py-2.5 rounded-xl bg-[#0F2547] text-white text-sm font-semibold hover:bg-[#1A3A6B] transition-colors">+ Add Product</button>
               )}
               {activeSection === 'Prices' && (
-                <button onClick={() => setShowAddPrice(true)} className="px-4 py-2.5 rounded-xl bg-[#0F2547] text-white text-sm font-semibold hover:bg-[#1A3A6B] transition-colors">
-                  + Add Price Record
-                </button>
+                <button onClick={() => setShowAddPrice(true)} className="px-4 py-2.5 rounded-xl bg-[#0F2547] text-white text-sm font-semibold hover:bg-[#1A3A6B] transition-colors">+ Add Price</button>
               )}
             </div>
           </div>
 
           {activeSection === 'Dashboard' && quality && (
             <>
-              {/* KPI Cards */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
                 {[
                   { label: 'Total Products', value: quality.products.toString(), change: 'Live DB', color: '#0F2547', bg: '#EFF6FF', icon: <Package size={20} className="text-[#0F2547]" /> },
@@ -217,34 +276,33 @@ export default function AdminPage({ onNavigate }: Props) {
                 ))}
               </div>
 
-              {/* Charts Grid */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-6">
                 <div className="bg-white rounded-2xl border border-[#E2E8F0] p-5">
-                  <h3 className="font-bold text-[#0F2547] mb-1" style={{ fontFamily: 'Outfit' }}>Mealie Meal Price Trends (Mock)</h3>
-                  <p className="text-xs text-[#64748B] mb-4">7-day average price by store (K)</p>
+                  <h3 className="font-bold text-[#0F2547] mb-1" style={{ fontFamily: 'Outfit' }}>{trendProductName} Price Trends</h3>
+                  <p className="text-xs text-[#64748B] mb-4">Recent price by store (K)</p>
                   <ResponsiveContainer width="100%" height={200}>
-                    <LineChart data={PRICE_TREND_DATA}>
+                    <LineChart data={trendData}>
                       <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" />
                       <XAxis dataKey="date" tick={{ fontSize: 10, fill: '#94A3B8' }} />
                       <YAxis tick={{ fontSize: 10, fill: '#94A3B8' }} domain={['auto', 'auto']} tickFormatter={v => `K${v}`} />
                       <Tooltip contentStyle={{ borderRadius: 12, fontSize: 12 }} formatter={(v: any) => [`K${v}`]} />
-                      <Line type="monotone" dataKey="shoprite" stroke="#E31837" strokeWidth={2} dot={false} name="Shoprite" />
-                      <Line type="monotone" dataKey="choppies" stroke="#0066CC" strokeWidth={2} dot={false} name="Choppies" />
-                      <Line type="monotone" dataKey="picknpay" stroke="#009F44" strokeWidth={2} dot={false} name="Pick n Pay" />
+                      <Line type="monotone" dataKey="Shoprite" stroke="#E31837" strokeWidth={2} dot={false} />
+                      <Line type="monotone" dataKey="Choppies" stroke="#0066CC" strokeWidth={2} dot={false} />
+                      <Line type="monotone" dataKey="Pick n Pay" stroke="#009F44" strokeWidth={2} dot={false} />
                       <Legend wrapperStyle={{ fontSize: 11 }} />
                     </LineChart>
                   </ResponsiveContainer>
                 </div>
 
                 <div className="bg-white rounded-2xl border border-[#E2E8F0] p-5">
-                  <h3 className="font-bold text-[#0F2547] mb-1" style={{ fontFamily: 'Outfit' }}>Average Basket by Store (Mock)</h3>
-                  <p className="text-xs text-[#64748B] mb-4">Current average basket price comparison</p>
+                  <h3 className="font-bold text-[#0F2547] mb-1" style={{ fontFamily: 'Outfit' }}>Average Price by Store</h3>
+                  <p className="text-xs text-[#64748B] mb-4">Average product price per supermarket (K)</p>
                   <ResponsiveContainer width="100%" height={200}>
-                    <BarChart data={STORE_COMPARISON} layout="vertical">
+                    <BarChart data={storeData} layout="vertical">
                       <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" />
                       <XAxis type="number" tick={{ fontSize: 10, fill: '#94A3B8' }} tickFormatter={v => `K${v}`} />
                       <YAxis type="category" dataKey="store" tick={{ fontSize: 10, fill: '#64748B' }} width={70} />
-                      <Tooltip contentStyle={{ borderRadius: 12, fontSize: 12 }} formatter={(v: any) => [`K${v}`, 'Avg Basket']} />
+                      <Tooltip contentStyle={{ borderRadius: 12, fontSize: 12 }} formatter={(v: any) => [`K${v}`, 'Avg Price']} />
                       <Bar dataKey="avgPrice" fill="#0F2547" radius={[0, 6, 6, 0]} maxBarSize={20} />
                     </BarChart>
                   </ResponsiveContainer>
@@ -282,13 +340,43 @@ export default function AdminPage({ onNavigate }: Props) {
           )}
 
           {activeSection === 'Prices' && (
-            <div className="bg-white rounded-2xl border border-[#E2E8F0] p-10 text-center">
-              <TrendingUp size={48} className="text-[#D97706] mx-auto mb-4" />
-              <h3 className="text-xl font-bold text-[#1E293B] mb-2" style={{ fontFamily: 'Outfit' }}>Price Management</h3>
-              <p className="text-[#64748B] text-sm mb-6">You have {quality?.total_price_records} price records in the database.</p>
-              <button onClick={() => setShowAddPrice(true)} className="px-6 py-3 rounded-xl bg-[#0F2547] text-white text-sm font-semibold">
-                Add New Price Observation
-              </button>
+            <div className="space-y-6">
+              {/* CSV Upload Box */}
+              <div className="bg-white rounded-2xl border border-[#E2E8F0] p-8 text-center border-dashed border-2 border-[#CBD5E1] hover:border-[#0F2547] transition-colors">
+                <Upload size={48} className="text-[#0F2547] mx-auto mb-4" />
+                <h3 className="text-xl font-bold text-[#1E293B] mb-2" style={{ fontFamily: 'Outfit' }}>Bulk Upload Prices (CSV)</h3>
+                <p className="text-[#64748B] text-sm mb-6">Upload a CSV file to insert multiple price records at once.</p>
+                
+                <input 
+                  type="file" 
+                  accept=".csv" 
+                  ref={fileInputRef}
+                  onChange={handleCSVUpload}
+                  className="hidden" 
+                  id="csvUpload" 
+                />
+                
+                <label 
+                  htmlFor="csvUpload" 
+                  className="cursor-pointer px-6 py-3 rounded-xl bg-[#0F2547] text-white text-sm font-semibold hover:bg-[#1A3A6B] transition-colors inline-block"
+                >
+                  Select CSV File
+                </label>
+                
+                <p className="text-xs text-[#94A3B8] mt-4">
+                  Format: <code className="bg-[#F1F5F9] px-1 rounded">product_id,branch_id,quantity,unit,price</code>
+                </p>
+              </div>
+
+              {/* Manual Entry Box */}
+              <div className="bg-white rounded-2xl border border-[#E2E8F0] p-8 text-center">
+                <TrendingUp size={48} className="text-[#D97706] mx-auto mb-4" />
+                <h3 className="text-xl font-bold text-[#1E293B] mb-2" style={{ fontFamily: 'Outfit' }}>Manual Price Entry</h3>
+                <p className="text-[#64748B] text-sm mb-6">You have {quality?.total_price_records} price records in the database.</p>
+                <button onClick={() => setShowAddPrice(true)} className="px-6 py-3 rounded-xl bg-[#0F2547] text-white text-sm font-semibold hover:bg-[#1A3A6B] transition-colors">
+                  Add Single Price Observation
+                </button>
+              </div>
             </div>
           )}
 
